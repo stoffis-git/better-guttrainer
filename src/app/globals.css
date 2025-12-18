@@ -1,0 +1,323 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* 
+  Design System: get-better.co aligned
+  - Monochromatic palette (black, white, grays)
+  - Clean, premium, scientific aesthetic
+  - DM Sans typography
+  - Pill-shaped buttons
+  - Generous whitespace
+*/
+
+@theme inline {
+  /* Colors - Monochromatic */
+  --color-background: #ffffff;
+  --color-background-light: #f7f7f7;
+  --color-background-card: #ffffff;
+  --color-background-elevated: #f1f1f1;
+  
+  --color-text-primary: #111111;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-text-dark: #0f0f0f;
+  
+  --color-border: #e5e7eb;
+  --color-border-light: #f1f5f9;
+  
+  /* Semantic */
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  
+  /* Typography */
+  --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
+  
+  /* Spacing scale */
+  --spacing-section: 80px;
+  --spacing-card: 32px;
+  
+  /* Border radius */
+  --radius-pill: 9999px;
+  --radius-card: 16px;
+  --radius-button: 9999px;
+  --radius-input: 12px;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 300;
+  font-size: 18px;
+  line-height: 30px;
+}
+
+/* Selection */
+::selection {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+/* Scrollbar - minimal */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* Focus states */
+:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Button base styles */
+.btn-primary {
+  background-color: #ffffff;
+  color: #111111;
+  font-weight: 600;
+  padding: 16px 32px;
+  border-radius: var(--radius-pill);
+  transition: all 0.2s ease;
+  border: 1px solid #111111;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn-primary:hover {
+  background-color: #111111;
+  color: #ffffff;
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: #f7f7f7;
+  color: #111111;
+  font-weight: 500;
+  padding: 16px 32px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn-secondary:hover {
+  background-color: #e5e7eb;
+  border-color: #111111;
+}
+
+/* Card styles */
+.card {
+  background-color: var(--color-background-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+}
+
+.card-light {
+  background-color: var(--color-background-light);
+  border-radius: var(--radius-card);
+  color: var(--color-text-dark);
+}
+
+/* Input styles */
+input[type="number"],
+select {
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: var(--radius-input);
+  color: #111111;
+  padding: 12px 16px;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+}
+
+input[type="number"]:focus,
+select:focus {
+  border-color: #111111;
+  outline: none;
+}
+
+/* Badge/Pill styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.badge-light {
+  background-color: #111111;
+  color: #ffffff;
+}
+
+.badge-dark {
+  background-color: #f3f4f6;
+  color: #111111;
+}
+
+/* Section backgrounds */
+.section-dark {
+  background-color: #ffffff;
+}
+
+.section-light {
+  background-color: var(--color-background-light);
+  color: var(--color-text-primary);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Stagger delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* Typography utilities */
+.text-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.text-headline {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-family: var(--font-sans);
+}
+
+.text-subheadline {
+  font-size: clamp(18px, 2.5vw, 22px);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+/* Progress bar */
+.progress-bar {
+  height: 2px;
+  background-color: var(--color-border);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #000000;
+  transition: width 0.25s ease-out;
+}
+
+/* Question transition animations */
+.question-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.question-animating-out-forward {
+  animation: slideOutLeftFade 0.25s ease-out forwards;
+}
+
+.question-animating-in-forward {
+  animation: slideInRightFade 0.25s ease-out forwards;
+}
+
+.question-animating-out-back {
+  animation: slideOutRightFade 0.25s ease-out forwards;
+}
+
+.question-animating-in-back {
+  animation: slideInLeftFade 0.25s ease-out forwards;
+}
+
+@keyframes slideOutLeftFade {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-80px);
+  }
+}
+
+@keyframes slideInRightFade {
+  from {
+    opacity: 0;
+    transform: translateX(80px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRightFade {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(80px);
+  }
+}
+
+@keyframes slideInLeftFade {
+  from {
+    opacity: 0;
+    transform: translateX(-80px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
