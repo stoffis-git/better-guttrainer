@@ -50,8 +50,7 @@ export default function ProtocolSetupScreen() {
       giPercent,
       selectedTimeline,
       currentIntake,
-      calcResult.target,
-      frequency
+      calcResult.target
     );
     setProtocolResult(protocol);
     router.push('/protocol-results');

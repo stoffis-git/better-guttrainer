@@ -10,6 +10,15 @@ export default function ProtocolResultsScreen() {
   const { state } = useApp();
   const protocol = state.protocolResult;
   const currentIntake = getIntakeMidpoint(state.currentIntake!);
+  const calcResult = state.calculationResult;
+  
+  // Derive targetIntake from last phase or calculation result
+  const targetIntake = protocol?.phases && protocol.phases.length > 0 
+    ? protocol.phases[protocol.phases.length - 1].targetIntake 
+    : calcResult?.target || 0;
+  
+  // Get carbGap from calculation result
+  const carbGap = calcResult?.carbGap || 0;
 
   if (!protocol) {
     return (
@@ -114,7 +123,7 @@ export default function ProtocolResultsScreen() {
         <div className="max-w-3xl mx-auto text-center space-y-4">
           <h1 className="text-3xl font-medium">Dein Gut-Training-Protokoll</h1>
           <p className="text-xl text-black/70">
-            {currentIntake}g/h → {protocol.targetIntake}g/h in {protocol.totalWeeks} Wochen
+            {currentIntake}g/h → {targetIntake}g/h in {protocol.totalWeeks} Wochen
           </p>
         </div>
       </section>
@@ -132,7 +141,7 @@ export default function ProtocolResultsScreen() {
           {/* Overview Stats */}
           <div className="grid grid-cols-4 gap-4">
             <div className="text-center p-4 bg-white rounded-xl border border-black/10">
-              <p className="text-2xl font-medium text-black">{currentIntake}→{protocol.targetIntake}</p>
+              <p className="text-2xl font-medium text-black">{currentIntake}→{targetIntake}</p>
               <p className="text-xs text-black/60 mt-1">Ziel (g/h)</p>
             </div>
             <div className="text-center p-4 bg-white rounded-xl border border-black/10">
@@ -140,11 +149,11 @@ export default function ProtocolResultsScreen() {
               <p className="text-xs text-black/60 mt-1">Wochen</p>
             </div>
             <div className="text-center p-4 bg-white rounded-xl border border-black/10">
-              <p className="text-2xl font-medium text-black">{protocol.trainingFrequency}</p>
+              <p className="text-2xl font-medium text-black">2</p>
               <p className="text-xs text-black/60 mt-1">Einheiten/Woche</p>
             </div>
             <div className="text-center p-4 bg-white rounded-xl border border-black/10">
-              <p className="text-2xl font-medium text-black">~{Math.round(protocol.carbGap / (protocol.totalWeeks / 2))}g</p>
+              <p className="text-2xl font-medium text-black">~{carbGap > 0 ? Math.round(carbGap / (protocol.totalWeeks / 2)) : 0}g</p>
               <p className="text-xs text-black/60 mt-1">Alle 2 Wochen</p>
             </div>
           </div>
@@ -165,14 +174,14 @@ export default function ProtocolResultsScreen() {
                   {protocol.phases.map((phase, idx) => (
                     <tr key={idx} className="border-b border-black/5 last:border-0">
                       <td className="px-4 py-3 text-black/70">
-                        {phase.startWeek === phase.endWeek 
-                          ? `Woche ${phase.startWeek}` 
-                          : `Wochen ${phase.startWeek}–${phase.endWeek}`}
+                        {phase.weekStart === phase.weekEnd 
+                          ? `Woche ${phase.weekStart}` 
+                          : `Wochen ${phase.weekStart}–${phase.weekEnd}`}
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-medium text-black">{phase.targetIntake}g/h</span>
                       </td>
-                      <td className="px-4 py-3 text-black/70">{phase.name}</td>
+                      <td className="px-4 py-3 text-black/70">{phase.phaseName}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -238,8 +247,8 @@ export default function ProtocolResultsScreen() {
             </div>
             <div className="p-4 bg-black/5 rounded-xl">
               <p className="text-sm text-black/70">
-                <span className="font-medium">So erreichst du {protocol.targetIntake}g/h:</span>{' '}
-                {getProductEquivalent(protocol.targetIntake)}
+                <span className="font-medium">So erreichst du {targetIntake}g/h:</span>{' '}
+                {getProductEquivalent(targetIntake)}
               </p>
             </div>
           </div>

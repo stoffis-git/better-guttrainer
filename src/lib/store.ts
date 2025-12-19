@@ -7,9 +7,8 @@
 import { createContext, useContext } from 'react';
 import type {
   Sport,
-  Event,
-  CurrentIntake,
-  GI_Frequency,
+  EventType,
+  GIFrequency,
   Gender,
   TimelineChoice,
   CalculationResult,
@@ -23,10 +22,10 @@ export interface AppState {
   
   // Questionnaire answers
   sport?: Sport;
-  event?: Event;
+  event?: EventType;
   finishTimeMinutes?: number;
-  currentIntake?: CurrentIntake;
-  giFrequency?: GI_Frequency;
+  currentIntake?: number;
+  giFrequency?: GIFrequency;
   gender?: Gender;
   
   // Results
