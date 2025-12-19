@@ -89,9 +89,20 @@ export default function ResultsScreen() {
   // Persist result in global state without causing render loops
   useEffect(() => {
     if (result) {
-      setCalculationResult(result);
+      // Only update if result actually changed (compare key values to avoid infinite loops)
+      const currentResult = state.calculationResult;
+      if (
+        !currentResult ||
+        currentResult.target !== result.target ||
+        currentResult.carbGap !== result.carbGap ||
+        currentResult.minutesLow !== result.minutesLow ||
+        currentResult.minutesHigh !== result.minutesHigh
+      ) {
+        setCalculationResult(result);
+      }
     }
-  }, [result, setCalculationResult]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, state.calculationResult]); // Compare values to prevent infinite loops
 
   if (!profile || !result) {
     return (
@@ -122,7 +133,7 @@ export default function ResultsScreen() {
 
   // Abstand zwischen aktuellem Stand und Ziel, um Text-Überlagerungen zu vermeiden
   const markerDistance = Math.abs(currentPositionPercent - nextStepPositionPercent);
-  const markersTooClose = markerDistance < 12; // in Prozentpunkten – enger Bereich, v.a. relevant für Mobile
+  const markersTooClose = markerDistance < 20; // in Prozentpunkten – aktiviert bei Differenzen < 20%
 
   const maxPotential90 = calculateTimeSavingsToTarget(profile, 90);
 
@@ -139,7 +150,7 @@ export default function ResultsScreen() {
             <p className="text-base md:text-lg font-semibold tracking-[0.18em] text-black/70">
               DEIN PERFORMANCE-POTENZIAL
             </p>
-            <p className="text-xl md:text-2xl text-black/80">
+            <p className="text-xs md:text-sm text-black/60">
               {eventTypeLabel} • {distanceLabel} • Deine Zeit: {currentTimeLabel}
             </p>
           </div>
@@ -169,9 +180,14 @@ export default function ResultsScreen() {
               <div className="rounded-xl border border-black/10 p-[2px]">
                 <div className="rounded-[10px] border border-black/10 bg-black/3 px-6 py-6">
                   <div className="space-y-3">
-                    <p className="text-xl md:text-2xl font-medium text-center">
-                      {currentIntakeNum} g/h <span className="mx-3">━━━━━━━━►</span> {nextStep} g/h
-                    </p>
+                    <div className="flex items-center justify-center gap-6 text-xl md:text-2xl font-medium max-w-full mx-auto" style={{ maxWidth: '375px' }}>
+                      <span className="whitespace-nowrap">{currentIntakeNum} g/h</span>
+                      <div className="flex items-center flex-1 min-w-0 max-w-[200px]">
+                        <div className="flex-1 h-px bg-black/30"></div>
+                        <span className="mx-1 text-xs text-black/30">►</span>
+                      </div>
+                      <span className="whitespace-nowrap">{nextStep} g/h</span>
+                    </div>
                     <p className="text-base md:text-lg text-center text-black/60">
                       ✓ Realistisch zwischen {weekMin}-{weekMax} Wochen erreichbar
                     </p>
@@ -186,7 +202,7 @@ export default function ResultsScreen() {
             href="/protocol-setup"
                 className="btn-primary bg-black text-white hover:bg-black hover:text-white px-12 py-4 text-lg md:text-xl inline-block"
           >
-                Mein {nextStep}g/h-Protokoll jetzt starten
+                Mein {nextStep}-Protokoll downloaden
           </a>
             </div>
           </div>
@@ -195,7 +211,7 @@ export default function ResultsScreen() {
 
       {/* Sektion 3: Progression */}
       <section className="bg-white border-b border-black/5">
-        <div className="max-w-[2000px] mx-auto px-8 py-14">
+        <div className="max-w-[2000px] mx-auto px-8 pt-14 pb-24">
           <div className="max-w-4xl mx-auto space-y-8">
             <h2 className="text-base md:text-lg font-semibold tracking-[0.18em] uppercase text-black/70">
               DEIN LEISTUNGSPOTENTIAL
@@ -206,23 +222,20 @@ export default function ResultsScreen() {
               <div className="relative w-full h-28 md:h-24">
                 {/* Statik: Marker oberhalb der Leiste */}
                 {/* 0 g/h Marker */}
-                <div className="absolute left-0 top-4 flex flex-col items-start text-xs md:text-sm text-black/60">
+                <div className="absolute left-0 top-3 flex flex-col items-start text-xs md:text-sm text-black/60">
                   <span>0 g/h</span>
                 </div>
 
-                {/* Empfohlene 90 g/h Markierung */}
+                {/* 90 g/h Marker */}
                 <div
-                  className="absolute top-0 flex flex-col items-center text-xs md:text-sm text-black/70"
+                  className="absolute top-3 flex flex-col items-center text-xs md:text-sm text-black/60"
                   style={{ left: `${recommended90PositionPercent}%`, transform: 'translateX(-50%)' }}
                 >
-                  <span className="text-[10px] md:text-[11px] uppercase tracking-[0.16em] mb-0.5">
-                    Empfohlen
-                  </span>
-                  <span className="font-light text-xs">90 g/h</span>
+                  <span>90 g/h</span>
                 </div>
 
                 {/* 120 g/h Marker */}
-                <div className="absolute right-0 top-4 flex flex-col items-end text-xs md:text-sm text-black/60">
+                <div className="absolute right-0 top-3 flex flex-col items-end text-xs md:text-sm text-black/60">
                   <span>120 g/h</span>
                 </div>
 
@@ -238,7 +251,7 @@ export default function ResultsScreen() {
 
                 {/* Kleiner statischer Strich bei 90 g/h auf der Leiste */}
                 <div
-                  className="absolute h-4 w-px bg-black/40"
+                  className="absolute h-4 w-px bg-black"
                   style={{ left: `${recommended90PositionPercent}%`, top: '50%', transform: 'translateX(-50%) translateY(-50%)' }}
                 />
 
@@ -270,23 +283,39 @@ export default function ResultsScreen() {
                     </div>
                   </>
                 ) : (
-                  /* Wenn Marker zu nah beieinander liegen, zusammenfassen */
-                  <div
-                    className="absolute flex flex-col items-center gap-1 text-xs md:text-sm text-black"
-                    style={{
-                      left: `${(currentPositionPercent + nextStepPositionPercent) / 2}%`,
-                      top: 'calc(50% + 14px)',
-                      transform: 'translateX(-50%)',
-                    }}
-                  >
-                    <span className="text-sm">↑</span>
-                    <span className="whitespace-nowrap text-base md:text-lg font-medium">
-                      {currentIntakeNum} → {nextStep} g/h
-                    </span>
-                    <span className="text-sm md:text-base text-black/70 whitespace-nowrap">
-                      Aktuell → Ziel
-                    </span>
-                  </div>
+                  /* Wenn Marker zu nah beieinander liegen, zusammenfassen - aber beide Pfeile behalten */
+                  <>
+                    {/* Pfeil für Aktuell */}
+                    <div
+                      className="absolute flex flex-col items-center"
+                      style={{ left: `${currentPositionPercent}%`, top: 'calc(50% + 14px)', transform: 'translateX(-50%)' }}
+                    >
+                      <span className="text-sm text-black">↑</span>
+                    </div>
+                    {/* Pfeil für Ziel */}
+                    <div
+                      className="absolute flex flex-col items-center"
+                      style={{ left: `${nextStepPositionPercent}%`, top: 'calc(50% + 14px)', transform: 'translateX(-50%)' }}
+                    >
+                      <span className="text-sm text-black/70">↑</span>
+                    </div>
+                    {/* Zusammengefasste Zahlen und Labels in der Mitte */}
+                    <div
+                      className="absolute flex flex-col items-center gap-1 text-xs md:text-sm text-black"
+                      style={{
+                        left: `${(currentPositionPercent + nextStepPositionPercent) / 2}%`,
+                        top: 'calc(50% + 32px)',
+                        transform: 'translateX(-50%)',
+                      }}
+                    >
+                      <span className="whitespace-nowrap text-base md:text-lg font-medium">
+                        {currentIntakeNum} → {nextStep} g/h
+                      </span>
+                      <span className="text-sm md:text-base text-black/70 whitespace-nowrap">
+                        Aktuell → Ziel
+                      </span>
+                    </div>
+                  </>
                 )}
               </div>
             </div>

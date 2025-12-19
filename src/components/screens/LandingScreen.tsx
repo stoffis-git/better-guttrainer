@@ -1,10 +1,20 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { useApp } from '@/lib/store';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 export default function LandingScreen() {
+  const { clearQuestionnaire } = useApp();
+
+  // Clear questionnaire answers when visiting landing page (starting fresh)
+  // Results are preserved so "zurück zum ergebnis" navigation still works
+  useEffect(() => {
+    clearQuestionnaire();
+  }, [clearQuestionnaire]);
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
       <Header />
@@ -14,18 +24,26 @@ export default function LandingScreen() {
         <div className="max-w-2xl mx-auto text-center space-y-8">
           {/* Headline */}
           <h1 className="text-headline leading-tight">
-            Train your gut!
+            Train your gut
           </h1>
+          
+          <div style={{ height: '24px' }} />
+
 
           {/* Subheadline */}
           <div className="text-subheadline max-w-lg mx-auto text-black/70 space-y-2">
             <p>
-              Finde heraus, wie viele Minuten du durch optimierte Kohlenhydrat-Zufuhr einsparen kannst
-            </p>
-            <p>
-              – und erhalte dein individuelles Gut-Training Protokoll.
+              "Wie viele Minuten kann ich durch optimierte Kohlenhydrat-Zufuhr einsparen?"
             </p>
           </div>
+          
+          {/* Extra spacing for visual balance */}
+          <div className="h-6 md:h-10"></div>
+
+
+
+
+
 
           {/* CTA */}
           <div className="pt-4">
@@ -33,7 +51,7 @@ export default function LandingScreen() {
               href="/questionnaire/1"
               className="btn-primary text-lg px-10 py-4 inline-block"
             >
-              Jetzt starten
+              Jetzt herausfinden
             </Link>
           </div>
 

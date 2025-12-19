@@ -1,6 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* Amberes Grotesk Font - Now loaded via next/font/local in layout.tsx */
+/* Fallback @font-face for compatibility */
+@font-face {
+  font-family: 'AmberesGrotesk';
+  src: url('/fonts/amberes-grotesk/amberes-grotesk.woff2') format('woff2'),
+       url('/fonts/amberes-grotesk/amberes-grotesk.woff') format('woff'),
+       url('/fonts/amberes-grotesk/amberes-grotesk.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* 
   Design System: get-better.co aligned
   - Monochromatic palette (black, white, grays)
@@ -232,7 +244,7 @@ select:focus {
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  font-family: var(--font-sans);
+  font-family: var(--font-amberes), 'AmberesGrotesk', var(--font-sans);
 }
 
 .text-subheadline {

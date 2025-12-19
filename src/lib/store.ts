@@ -28,6 +28,9 @@ export interface AppState {
   giFrequency?: GIFrequency;
   gender?: Gender;
   
+  // Protocol setup
+  frequency?: 1 | 2 | 3;
+  
   // Results
   calculationResult?: CalculationResult;
   protocolResult?: ProtocolResult;
@@ -40,6 +43,7 @@ export interface AppContextType {
   setCalculationResult: (result: CalculationResult) => void;
   setProtocolResult: (result: ProtocolResult) => void;
   reset: () => void;
+  clearQuestionnaire: () => void;
 }
 
 export const initialState: AppState = {

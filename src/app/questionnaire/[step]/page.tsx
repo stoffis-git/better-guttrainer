@@ -62,10 +62,19 @@ type AnimPhase = 'idle' | 'out-forward' | 'in-forward' | 'out-back' | 'in-back';
 export default function QuestionnaireStepPage() {
   const params = useParams();
   const router = useRouter();
-  const { state, setAnswer } = useApp();
+  const { state, setAnswer, clearQuestionnaire } = useApp();
   const step = parseInt(params.step as string, 10);
   const [animPhase, setAnimPhase] = useState<AnimPhase>('idle');
   const totalSteps = 6;
+
+  // Clear questionnaire answers when starting fresh (step 1)
+  // This allows users to restart without old cached answers
+  // Results are preserved so "zurück zum ergebnis" navigation still works
+  useEffect(() => {
+    if (step === 1) {
+      clearQuestionnaire();
+    }
+  }, [step, clearQuestionnaire]); // Clear when starting questionnaire step 1
 
   // Validate step number
   if (isNaN(step) || step < 1 || step > totalSteps) {

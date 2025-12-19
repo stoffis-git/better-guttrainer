@@ -9,9 +9,9 @@ import type { TimelineChoice } from '@/lib/types';
 
 export default function ProtocolSetupScreen() {
   const router = useRouter();
-  const { state, setProtocolResult } = useApp();
+  const { state, setProtocolResult, setAnswer } = useApp();
   const [timeline, setTimeline] = useState<TimelineChoice | null>(null);
-  const [frequency, setFrequency] = useState<1 | 2 | 3>(2);
+  const frequency = state.frequency || 2;
 
   const calcResult = state.calculationResult;
   const currentIntake = getIntakeMidpoint(state.currentIntake!);
@@ -57,31 +57,29 @@ export default function ProtocolSetupScreen() {
   };
 
   const timelineOptions: { value: TimelineChoice; label: string; desc: string; rate: string }[] = [
-    { value: '4-6-weeks', label: '4–6 Wochen', desc: 'Schnelle Progression, hohe Trainingsdisziplin nötig', rate: '~2g/Woche' },
-    { value: '6-10-weeks', label: '6–10 Wochen', desc: 'Gleichgewicht aus Tempo und Anpassung', rate: '~1,2g/Woche' },
-    { value: '10+-weeks', label: '10+ Wochen', desc: 'Konservativ, geringstes GI-Risiko', rate: '~0,7g/Woche' },
+    { value: '4-6-weeks', label: '4 Wochen', desc: 'Schnelle Progression, hohe Trainingsdisziplin nötig', rate: '~2g/Woche' },
+    { value: '6-10-weeks', label: '8 Wochen', desc: 'Gleichgewicht aus Tempo und Anpassung', rate: '~1,2g/Woche' },
+    { value: '10+-weeks', label: '12 Wochen', desc: 'Konservativ, geringstes GI-Risiko', rate: '~0,7g/Woche' },
   ];
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
       {/* Header */}
-      <header className="px-6 py-6 border-b border-black/5">
-        <div className="max-w-xl mx-auto">
-          <a
-            href="/results"
-            className="flex items-center gap-2 text-black/70 hover:text-black transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Zurück zum Ergebnis
-          </a>
-        </div>
+      <header className="px-6 pt-6 pb-4">
+        <a
+          href="/results"
+          className="flex items-center gap-2 text-sm md:text-base text-black/70 hover:text-black transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Zurück zum Ergebnis
+        </a>
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-6 py-12">
-        <div className="max-w-xl mx-auto space-y-12">
+      <main className="flex-1 px-6 pt-6 pb-0 md:pb-2">
+        <div className="max-w-xl mx-auto space-y-10">
           {/* Short distance disclaimer */}
           {state.sport && state.event && isShortDistanceEvent(state.sport, state.event) && (
             <p className="text-xs text-zinc-500 text-center">
@@ -90,9 +88,9 @@ export default function ProtocolSetupScreen() {
           )}
           {/* Title */}
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-medium">Dein Protokoll konfigurieren</h1>
+            <h1 className="text-3xl font-medium">Dein Protokoll</h1>
             <p className="text-zinc-500">
-              Von {currentIntake}g/h auf {calcResult.target}g/h steigern (Differenz: {calcResult.carbGap}g/h)
+              {currentIntake}g/h auf {calcResult.target}g/h
             </p>
           </div>
 
@@ -143,26 +141,17 @@ export default function ProtocolSetupScreen() {
                 </button>
               ))}
             </div>
-
-            {/* Recommendation explanation */}
-            <div className="p-4 rounded-xl bg-black/5 border border-black/10">
-              <p className="text-sm text-black/70">
-                <span className="font-medium text-black">
-                  {`Empfohlen bei ${calcResult.carbGap}g/h${currentIntake >= 90 ? ' oberhalb von 90g/h.' : '.'}`}
-                </span>
-              </p>
-            </div>
           </div>
 
           {/* Training Frequency */}
           <div className="space-y-4">
             <h2 className="text-label">Trainingshäufigkeit</h2>
-            <p className="text-sm text-zinc-500">Wie viele Einheiten über 2 Stunden schaffst du pro Woche?</p>
+            <p className="text-sm text-zinc-500">Wie viele Einheiten <span className="font-medium">über 2 Stunden</span> schaffst du pro Woche?</p>
             <div className="grid grid-cols-3 gap-3">
               {([1, 2, 3] as const).map((num) => (
                 <button
                   key={num}
-                  onClick={() => setFrequency(num)}
+                  onClick={() => setAnswer('frequency', num)}
                   className={`p-4 rounded-xl border text-center transition-all ${
                     frequency === num
                       ? 'border-black bg-black text-white'
@@ -177,14 +166,14 @@ export default function ProtocolSetupScreen() {
               ))}
             </div>
             {frequency >= 2 && (
-              <p className="text-xs text-black/60">✓ Empfohlen für bestmögliche Anpassung</p>
+              <p className="text-xs text-black/60 mb-4">✓ Empfohlen für bestmögliche Anpassung</p>
             )}
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="px-6 py-6 border-t border-black/5">
+      <footer className="px-6 pt-2 md:pt-0 pb-12 md:pb-[146px]">
         <div className="max-w-xl mx-auto">
           <button
             onClick={handleGenerate}

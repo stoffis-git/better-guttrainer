@@ -28,7 +28,7 @@ export default function Footer() {
               2025 ® All rights reserved<br />
               Better Performance GmbH
             </p>
-            <p className="text-[18px] leading-[30px] text-white font-light italic">
+            <p className="text-sm leading-[20px] text-white font-light italic">
               From Hamburg to all great athletes
             </p>
           </div>

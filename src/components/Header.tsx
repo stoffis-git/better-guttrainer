@@ -5,12 +5,12 @@ import Image from 'next/image';
 export default function Header() {
   return (
     <header className="border-b border-black/5 bg-white">
-      <nav className="max-w-[2000px] mx-auto px-6 py-4">
+      <nav className="max-w-[2000px] mx-auto px-6 py-6">
         <div className="flex items-center justify-center relative">
           {/* Home Icon - Left Aligned */}
           <a 
             href="https://get-better.co" 
-            className="absolute left-0 flex items-center text-black/70 hover:text-black transition-colors"
+            className="absolute left-0 flex items-center text-black hover:text-black transition-colors"
             aria-label="Zurück zur better Homepage"
           >
             <svg 
@@ -39,7 +39,7 @@ export default function Header() {
               alt="better"
               width={120}
               height={32}
-              className="h-8 w-auto"
+              className="h-5 w-auto"
               priority
             />
           </a>

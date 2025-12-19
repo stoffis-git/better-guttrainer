@@ -1,6 +1,28 @@
 import type { Metadata } from "next";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AppProvider } from "@/components/AppProvider";
+
+// Load Amberes Grotesk font using Next.js font optimization
+// Path is relative to project root (where next.config.ts is located)
+// From src/app/layout.tsx, we need to go up two levels to reach project root
+const amberesGrotesk = localFont({
+  src: [
+    {
+      path: "../../public/fonts/amberes-grotesk/amberes-grotesk.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/amberes-grotesk/amberes-grotesk.woff",
+      weight: "400",
+      style: "normal",
+    },
+  ],
+  variable: "--font-amberes",
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   title: "Gut-Training Protokoll-Generator | Optimiere deine Energiezufuhr",
@@ -26,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de">
+    <html lang="de" className={amberesGrotesk.variable}>
       <body className="antialiased">
         <AppProvider>
           {children}

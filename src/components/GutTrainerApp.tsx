@@ -32,6 +32,20 @@ export function GutTrainerApp() {
     setState(initialState);
   }, []);
 
+  const clearQuestionnaire = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      sport: undefined,
+      event: undefined,
+      finishTimeMinutes: undefined,
+      currentIntake: undefined,
+      giFrequency: undefined,
+      gender: undefined,
+      calculationResult: undefined,
+      protocolResult: undefined,
+    }));
+  }, []);
+
   const contextValue = useMemo(() => ({
     state,
     setScreen,
@@ -39,7 +53,8 @@ export function GutTrainerApp() {
     setCalculationResult,
     setProtocolResult,
     reset,
-  }), [state, setScreen, setAnswer, setCalculationResult, setProtocolResult, reset]);
+    clearQuestionnaire,
+  }), [state, setScreen, setAnswer, setCalculationResult, setProtocolResult, reset, clearQuestionnaire]);
 
   return (
     <AppContext.Provider value={contextValue}>

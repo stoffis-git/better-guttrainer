@@ -3,7 +3,14 @@
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
 import { getIntakeMidpoint, getProductEquivalent } from '@/lib/calculations';
-import { isShortDistanceEvent } from '@/lib/types';
+import { isShortDistanceEvent, sportDisplayNames, eventDisplayNames } from '@/lib/types';
+
+// Helper for header time display (HH:MMh)
+function formatHoursMinutes(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60);
+  const m = Math.floor(totalMinutes % 60);
+  return `${h}:${m.toString().padStart(2, '0')}h`;
+}
 
 export default function ProtocolResultsScreen() {
   const router = useRouter();
@@ -35,60 +42,60 @@ export default function ProtocolResultsScreen() {
   // Sport-specific training guidance
   const sportGuidance = {
     triathlon: {
-      session: 'Long bike ride (3–4 hours)',
-      why: 'Easier to train gut than running (less GI distress from impact)',
+      session: 'Lange Radtour (3–4 Stunden)',
+      why: 'Einfacher als Laufen zu trainieren (weniger GI-Beschwerden durch Aufprall)',
       strategy: [
-        'First 30 min: Easy pace, no fueling',
-        'Hours 1–3: Practice your weekly target intake',
-        'Final 30 min: Test race-day products',
+        'Erste 30 Min: Leichtes Tempo, keine Zufuhr',
+        'Stunden 1–3: Übe deine wöchentliche Zielzufuhr',
+        'Letzte 30 Min: Teste Wettkampfprodukte',
       ],
       raceDay: [
-        '70% of intake on bike',
-        '30% of intake on run',
-        'Consume gel at T1 (bike mount)',
-        'Consume gel immediately post-bike at T2',
+        '70% der Zufuhr auf dem Rad',
+        '30% der Zufuhr beim Laufen',
+        'Gel bei T1 (Radaufstieg) konsumieren',
+        'Gel direkt nach dem Rad bei T2 konsumieren',
       ],
     },
     cycling: {
-      session: 'Long ride (4+ hours)',
-      why: 'Extended duration allows for multiple fueling windows',
+      session: 'Lange Tour (4+ Stunden)',
+      why: 'Längere Dauer ermöglicht mehrere Zufuhrfenster',
       strategy: [
-        'First 30 min: Easy spin, no fueling',
-        'Hours 1–3: Practice target intake at race intensity',
-        'Hour 4+: Simulate race conditions with race products',
+        'Erste 30 Min: Leichtes Fahren, keine Zufuhr',
+        'Stunden 1–3: Übe Zielzufuhr bei Wettkampfintensität',
+        'Stunde 4+: Simuliere Wettkampfbedingungen mit Wettkampfprodukten',
       ],
       raceDay: [
-        'Front-load first 2 hours if possible',
-        'Set timer for regular intake reminders',
-        'Practice bottle handoffs if in events with support',
+        'Wenn möglich, erste 2 Stunden vorladen',
+        'Timer für regelmäßige Zufuhr-Erinnerungen setzen',
+        'Flaschenübergaben üben, wenn Support vorhanden',
       ],
     },
     gravel: {
-      session: 'Long gravel ride (3–5 hours)',
-      why: 'Mixed terrain helps practice eating in varied conditions',
+      session: 'Lange Gravel-Tour (3–5 Stunden)',
+      why: 'Gemischtes Terrain hilft beim Üben der Zufuhr unter verschiedenen Bedingungen',
       strategy: [
-        'Practice eating on rough sections',
-        'Test pocket-accessible nutrition',
-        'Simulate race-day product mix',
+        'Zufuhr auf schwierigen Abschnitten üben',
+        'Taschenzugängliche Ernährung testen',
+        'Wettkampfproduktmix simulieren',
       ],
       raceDay: [
-        'Front-load before technical sections',
-        'Use easy sections for larger intake',
-        'Keep race nutrition in easy-access pockets',
+        'Vor technischen Abschnitten vorladen',
+        'Einfache Abschnitte für größere Zufuhr nutzen',
+        'Wettkampfernährung in leicht zugänglichen Taschen',
       ],
     },
     running: {
-      session: 'Long run with walking breaks (2–3 hours)',
-      why: 'Walking intervals allow for easier intake',
+      session: 'Langer Lauf mit Gehpausen (2–3 Stunden)',
+      why: 'Gehintervalle ermöglichen einfachere Zufuhr',
       strategy: [
-        'First 30 min: Easy pace, hydration only',
-        'Practice intake during walking intervals',
-        'Test different product formats (gels vs. drinks)',
+        'Erste 30 Min: Leichtes Tempo, nur Hydration',
+        'Zufuhr während Gehintervallen üben',
+        'Verschiedene Produktformate testen (Gels vs. Getränke)',
       ],
       raceDay: [
-        'Take nutrition at aid stations',
-        'Walk through aid stations if needed',
-        'Practice race-day brands before event',
+        'Ernährung an Verpflegungsstationen aufnehmen',
+        'Bei Bedarf durch Verpflegungsstationen gehen',
+        'Wettkampfmarken vor dem Event üben',
       ],
     },
   };
@@ -122,9 +129,23 @@ export default function ProtocolResultsScreen() {
       <section className="px-6 py-12 border-b border-black/5">
         <div className="max-w-3xl mx-auto text-center space-y-4">
           <h1 className="text-3xl font-medium">Dein Gut-Training-Protokoll</h1>
-          <p className="text-xl text-black/70">
-            {currentIntake}g/h → {targetIntake}g/h in {protocol.totalWeeks} Wochen
-          </p>
+          
+          {/* Input Summary - Minimal */}
+          <div className="pt-4">
+            <p className="text-xs text-black/50 space-x-3">
+              {state.sport && <span>{sportDisplayNames[state.sport]}</span>}
+              {state.event && <span>• {eventDisplayNames[state.event]}</span>}
+              {state.finishTimeMinutes && (
+                <span>• {formatHoursMinutes(state.finishTimeMinutes)}</span>
+              )}
+              {state.giFrequency && (
+                <span>• {state.giFrequency === 'rarely' ? 'Selten' : state.giFrequency === 'sometimes' ? 'Gelegentlich' : state.giFrequency === 'often' ? 'Häufig' : 'Sehr häufig'} GI-Beschwerden</span>
+              )}
+              {state.gender && (
+                <span>• {state.gender === 'male' ? 'Männlich' : state.gender === 'female' ? 'Weiblich' : 'Keine Angabe'}</span>
+              )}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -139,7 +160,7 @@ export default function ProtocolResultsScreen() {
           )}
           
           {/* Overview Stats */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="text-center p-4 bg-white rounded-xl border border-black/10">
               <p className="text-2xl font-medium text-black">{currentIntake}→{targetIntake}</p>
               <p className="text-xs text-black/60 mt-1">Ziel (g/h)</p>
@@ -149,12 +170,8 @@ export default function ProtocolResultsScreen() {
               <p className="text-xs text-black/60 mt-1">Wochen</p>
             </div>
             <div className="text-center p-4 bg-white rounded-xl border border-black/10">
-              <p className="text-2xl font-medium text-black">2</p>
+              <p className="text-2xl font-medium text-black">{state.frequency || 2}</p>
               <p className="text-xs text-black/60 mt-1">Einheiten/Woche</p>
-            </div>
-            <div className="text-center p-4 bg-white rounded-xl border border-black/10">
-              <p className="text-2xl font-medium text-black">~{carbGap > 0 ? Math.round(carbGap / (protocol.totalWeeks / 2)) : 0}g</p>
-              <p className="text-xs text-black/60 mt-1">Alle 2 Wochen</p>
             </div>
           </div>
 
@@ -167,23 +184,38 @@ export default function ProtocolResultsScreen() {
                   <tr>
                     <th className="px-4 py-3 text-left font-medium text-black/70">Woche</th>
                     <th className="px-4 py-3 text-left font-medium text-black/70">Zielzufuhr</th>
+                    <th className="px-4 py-3 text-left font-medium text-black/70">Wöchentliche Steigerung</th>
                     <th className="px-4 py-3 text-left font-medium text-black/70">Phase</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {protocol.phases.map((phase, idx) => (
-                    <tr key={idx} className="border-b border-black/5 last:border-0">
-                      <td className="px-4 py-3 text-black/70">
-                        {phase.weekStart === phase.weekEnd 
-                          ? `Woche ${phase.weekStart}` 
-                          : `Wochen ${phase.weekStart}–${phase.weekEnd}`}
+                  {Array.from({ length: protocol.totalWeeks }, (_, weekIndex) => {
+                    const week = weekIndex + 1;
+                    // Find the phase that covers this week
+                    const phase = protocol.phases.find(
+                      p => week >= p.weekStart && week <= p.weekEnd
+                    ) || protocol.phases[protocol.phases.length - 1];
+                    
+                    // Calculate intake for this specific week
+                    const weeklyIncrease = protocol.weeklyIncrease;
+                    const weekIntake = Math.round((currentIntake + weeklyIncrease * weekIndex) * 10) / 10;
+                    const cappedIntake = Math.min(weekIntake, targetIntake);
+                    
+                    return (
+                      <tr key={week} className="border-b border-black/5 last:border-0">
+                        <td className="px-4 py-3 text-black/70 font-medium">
+                          Woche {week}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-medium text-black">{phase.targetIntake}g/h</span>
+                          <span className="font-medium text-black">{cappedIntake}g/h</span>
+                        </td>
+                        <td className="px-4 py-3 text-black/60">
+                          {week === 1 ? '—' : `+${weeklyIncrease.toFixed(1)}g/h`}
                       </td>
-                      <td className="px-4 py-3 text-black/70">{phase.phaseName}</td>
+                        <td className="px-4 py-3 text-black/70 text-xs">{phase.phaseName}</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -219,37 +251,6 @@ export default function ProtocolResultsScreen() {
                   ))}
                 </ul>
               </div>
-            </div>
-          </div>
-
-          {/* Product Strategy */}
-          <div className="space-y-4">
-            <h2 className="text-label text-black/70">Produkt-Strategie</h2>
-            <div className="space-y-3">
-              <div className="p-4 bg-white rounded-xl border border-black/10">
-                <p className="font-medium text-black">Phase 1: Wochen 1–4 (Basis)</p>
-                <p className="text-sm text-black/60 mt-1">
-                  Bleibe zunächst bei vertrauten Produkten. Ziel: Volumentoleranz aufbauen. Empfohlen: maltodextrinbasierte Sportgetränke.
-                </p>
-              </div>
-              <div className="p-4 bg-white rounded-xl border border-black/10">
-                <p className="font-medium text-black">Phase 2: Wochen 5–8 (Optimierung)</p>
-                <p className="text-sm text-black/60 mt-1">
-                  Führe Dual-Source-Produkte (2:1 Glukose:Fruktose) ein. Starte mit ca. 50/50-Mischung mit deinen gewohnten Produkten.
-                </p>
-              </div>
-              <div className="p-4 bg-white rounded-xl border border-black/10">
-                <p className="font-medium text-black">Phase 3: Woche 9+ (Race-Prep)</p>
-                <p className="text-sm text-black/60 mt-1">
-                  Lege deine Race-Day-Produkte fest. Wechsele zu 100&nbsp;% auf deine Wettkampfernährung. Keine neuen Experimente!
-                </p>
-              </div>
-            </div>
-            <div className="p-4 bg-black/5 rounded-xl">
-              <p className="text-sm text-black/70">
-                <span className="font-medium">So erreichst du {targetIntake}g/h:</span>{' '}
-                {getProductEquivalent(targetIntake)}
-              </p>
             </div>
           </div>
 

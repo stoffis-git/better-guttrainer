@@ -63,6 +63,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const clearQuestionnaire = useCallback(() => {
+    // Clear questionnaire answers and results when restarting
+    // This ensures a fresh start when user begins a new questionnaire
+    setState(prev => ({
+      ...prev,
+      sport: undefined,
+      event: undefined,
+      finishTimeMinutes: undefined,
+      currentIntake: undefined,
+      giFrequency: undefined,
+      gender: undefined,
+      calculationResult: undefined,
+      protocolResult: undefined,
+    }));
+  }, []);
+
   const contextValue = useMemo<AppContextType>(() => ({
     state,
     setScreen,
@@ -70,7 +86,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCalculationResult,
     setProtocolResult,
     reset,
-  }), [state, setScreen, setAnswer, setCalculationResult, setProtocolResult, reset]);
+    clearQuestionnaire,
+  }), [state, setScreen, setAnswer, setCalculationResult, setProtocolResult, reset, clearQuestionnaire]);
 
   return (
     <AppContext.Provider value={contextValue}>

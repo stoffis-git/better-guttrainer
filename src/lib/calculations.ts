@@ -227,7 +227,7 @@ export function calculateProtocol(
   // STEP 1: Base weeks from user choice
   let baseWeeks: number;
   if (timelineChoice === '4-6-weeks') {
-    baseWeeks = 5;
+    baseWeeks = 4;
   } else if (timelineChoice === '6-10-weeks') {
     baseWeeks = 8;
   } else {
