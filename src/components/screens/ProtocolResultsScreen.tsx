@@ -69,73 +69,6 @@ export default function ProtocolResultsScreen() {
       }
     }
 
-    // Convert all colors to explicit RGB/hex values before PDF generation
-    // This prevents html2canvas from trying to parse oklab() color functions
-    const allElements = element.querySelectorAll('*');
-    const originalStyles: Array<{
-      element: HTMLElement;
-      backgroundColor: string;
-      color: string;
-      borderColor: string;
-    }> = [];
-
-    allElements.forEach((el) => {
-      const htmlEl = el as HTMLElement;
-      const computedStyle = window.getComputedStyle(htmlEl);
-      
-      // Store original inline styles
-      const originalBg = htmlEl.style.backgroundColor;
-      const originalColor = htmlEl.style.color;
-      const originalBorder = htmlEl.style.borderColor;
-      
-      originalStyles.push({
-        element: htmlEl,
-        backgroundColor: originalBg,
-        color: originalColor,
-        borderColor: originalBorder
-      });
-
-      // Set explicit RGB values from computed styles
-      try {
-        const bgColor = computedStyle.backgroundColor;
-        if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-          htmlEl.style.backgroundColor = bgColor;
-        } else if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') {
-          htmlEl.style.backgroundColor = 'transparent';
-        }
-      } catch (e) {
-        // If error, set to white as fallback
-        htmlEl.style.backgroundColor = '#ffffff';
-      }
-
-      try {
-        const textColor = computedStyle.color;
-        if (textColor) {
-          htmlEl.style.color = textColor;
-        }
-      } catch (e) {
-        htmlEl.style.color = '#000000';
-      }
-
-      try {
-        const borderColor = computedStyle.borderColor;
-        if (borderColor && borderColor !== 'rgba(0, 0, 0, 0)') {
-          htmlEl.style.borderColor = borderColor;
-        }
-      } catch (e) {
-        // Ignore border color errors
-      }
-    });
-
-    // Also set background color on the main element
-    const elementBg = window.getComputedStyle(element).backgroundColor;
-    const originalElementBg = (element as HTMLElement).style.backgroundColor;
-    if (elementBg && elementBg !== 'rgba(0, 0, 0, 0)' && elementBg !== 'transparent') {
-      (element as HTMLElement).style.backgroundColor = elementBg;
-    } else {
-      (element as HTMLElement).style.backgroundColor = '#ffffff';
-    }
-
     // Configure PDF options
     const opt = {
       margin: [15, 15, 15, 15] as [number, number, number, number], // 15mm margins
@@ -165,16 +98,6 @@ export default function ProtocolResultsScreen() {
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {
-      // Restore original styles
-      originalStyles.forEach(({ element, backgroundColor, color, borderColor }) => {
-        element.style.backgroundColor = backgroundColor;
-        element.style.color = color;
-        element.style.borderColor = borderColor;
-      });
-
-      // Restore main element background
-      (element as HTMLElement).style.backgroundColor = originalElementBg;
-
       // Restore hidden elements
       elementsToHide.forEach((el, index) => {
         const htmlEl = el as HTMLElement;
@@ -603,7 +526,7 @@ export default function ProtocolResultsScreen() {
       {/* Pure Carb Promotion */}
       <section className="px-6 pt-12 pb-8">
         <div className="max-w-3xl mx-auto">
-          <div className="rounded-2xl text-white overflow-hidden relative flex" style={{ backgroundColor: '#B0B5B2' }}>
+          <div className="rounded-2xl text-white overflow-hidden relative flex" style={{ backgroundColor: '#000000' }}>
             {/* Image - 50% on mobile, 1/3 on desktop, borderless */}
             <div className="w-1/2 md:w-1/3 relative flex-shrink-0">
               <Image
