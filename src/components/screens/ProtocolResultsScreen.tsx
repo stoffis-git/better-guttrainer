@@ -450,9 +450,9 @@ export default function ProtocolResultsScreen() {
       {/* Pure Carb Promotion */}
       <section className="px-6 pt-12 pb-8">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-gradient-to-br from-black to-black/90 rounded-2xl text-white overflow-hidden relative flex">
-            {/* Image - 1/3 width, borderless */}
-            <div className="w-1/3 relative flex-shrink-0">
+          <div className="rounded-2xl text-white overflow-hidden relative flex" style={{ backgroundColor: '#B0B5B2' }}>
+            {/* Image - 50% on mobile, 1/3 on desktop, borderless */}
+            <div className="w-1/2 md:w-1/3 relative flex-shrink-0">
               <Image
                 src="https://cdn.shopify.com/s/files/1/0873/9700/7685/files/TV_101_7d3bd0ed-458c-466c-856f-1a1398da6b20.jpg?v=1763976690"
                 alt="Pure Carb Produktbild"
@@ -462,12 +462,12 @@ export default function ProtocolResultsScreen() {
                 unoptimized
               />
             </div>
-            {/* Content - 2/3 width */}
-            <div className="w-2/3 p-6 md:p-8 relative z-10 flex flex-col justify-center">
+            {/* Content - 50% on mobile, 2/3 on desktop */}
+            <div className="w-1/2 md:w-2/3 p-6 md:p-8 relative z-10 flex flex-col justify-center">
               <h3 className="text-xl md:text-2xl font-medium mb-2">Pure Carb – Deine optimale Energiequelle</h3>
               <p className="text-white/80 text-sm md:text-base mb-4">
-                Geschmacksneutral süßer Drink-Mix mit Fruktose. 
-                Maximal magenfreundlich und von 30–120g/h dosierbar – perfekt für dein Gut-Training.
+                Geschmacksneutral und maximal magenfreundlich.
+                Von 30–120g/h dosierbar – perfekt für dein Gut-Training.
               </p>
               <a
                 href="https://get-better.co/pure-carb"
@@ -475,7 +475,8 @@ export default function ProtocolResultsScreen() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full hover:bg-white/90 transition-colors font-medium text-sm w-fit"
               >
-                Pure Carb entdecken
+                <span className="md:inline hidden">Pure Carb entdecken</span>
+                <span className="md:hidden">Entdecken</span>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
