@@ -197,6 +197,12 @@ export default function ProtocolSetupScreen() {
                 );
               })}
             </div>
+            {/* Note explaining disabled tiles - only show if any are disabled */}
+            {Object.values(validDurations).some(valid => !valid) && (
+              <p className="text-xs text-black/50 text-center mt-2">
+                Deaktivierte Optionen würden automatisch verkürzt werden (zu geringe wöchentliche Steigerung)
+              </p>
+            )}
           </div>
 
           {/* Training Frequency */}
