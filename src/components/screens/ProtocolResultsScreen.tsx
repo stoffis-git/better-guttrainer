@@ -69,6 +69,43 @@ export default function ProtocolResultsScreen() {
       }
     }
 
+    // Helper function to convert colors in cloned DOM by reading from original
+    const convertColorsInClone = (clonedElement: HTMLElement, originalElement: HTMLElement) => {
+      const clonedElements = clonedElement.querySelectorAll('*');
+      const originalElements = originalElement.querySelectorAll('*');
+      
+      clonedElements.forEach((clonedEl, index) => {
+        if (index < originalElements.length) {
+          const originalEl = originalElements[index] as HTMLElement;
+          const htmlEl = clonedEl as HTMLElement;
+          
+          try {
+            const computedStyle = window.getComputedStyle(originalEl);
+            
+            // Convert background-color
+            const bgColor = computedStyle.backgroundColor;
+            if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+              htmlEl.style.backgroundColor = bgColor;
+            }
+            
+            // Convert color
+            const textColor = computedStyle.color;
+            if (textColor) {
+              htmlEl.style.color = textColor;
+            }
+            
+            // Convert border-color
+            const borderColor = computedStyle.borderColor;
+            if (borderColor && borderColor !== 'rgba(0, 0, 0, 0)') {
+              htmlEl.style.borderColor = borderColor;
+            }
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+      });
+    };
+
     // Configure PDF options
     const opt = {
       margin: [15, 15, 15, 15] as [number, number, number, number], // 15mm margins
@@ -78,7 +115,18 @@ export default function ProtocolResultsScreen() {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        ignoreElements: (element: Element) => {
+          // Ignore elements with data-pdf-exclude
+          return element.hasAttribute('data-pdf-exclude');
+        },
+        onclone: (clonedDoc: Document) => {
+          // Convert colors in cloned document to RGB format
+          const clonedElement = clonedDoc.getElementById('protocol-content');
+          if (clonedElement && element) {
+            convertColorsInClone(clonedElement as HTMLElement, element as HTMLElement);
+          }
+        }
       },
       jsPDF: { 
         unit: 'mm', 
