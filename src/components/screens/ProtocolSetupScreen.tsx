@@ -200,7 +200,7 @@ export default function ProtocolSetupScreen() {
             {/* Note explaining disabled tiles - only show if any are disabled */}
             {Object.values(validDurations).some(valid => !valid) && (
               <p className="text-xs text-black/50 text-center mt-2">
-                Deaktivierte Optionen würden automatisch verkürzt werden (zu geringe wöchentliche Steigerung)
+                Hinweis: Manche Protokoll-Längen sind für deine Steigerung nicht sinnvoll und daher deaktiviert.
               </p>
             )}
           </div>
