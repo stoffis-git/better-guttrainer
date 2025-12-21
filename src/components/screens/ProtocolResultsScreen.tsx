@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/store';
-import { getIntakeMidpoint, getProductEquivalent } from '@/lib/calculations';
+import { getIntakeMidpoint, getProductEquivalent, calculateWeekSessions } from '@/lib/calculations';
 import { isShortDistanceEvent, sportDisplayNames, eventDisplayNames } from '@/lib/types';
 
 // Helper for header time display (HH:MMh)
@@ -205,89 +205,40 @@ export default function ProtocolResultsScreen() {
                   p => week >= p.weekStart && week <= p.weekEnd
                 ) || protocol.phases[protocol.phases.length - 1];
                 
-                // Calculate linear distribution
-                const carbGap = targetIntake - currentIntake;
-                const baseIncrease = protocol.baseIncrease;
-                const remainder = protocol.remainder;
+                // NEW: Use weeklyTargets array and calculateWeekSessions
+                const weeklyTargets = protocol.weeklyTargets || [];
                 
-                // Calculate intake for this specific week using linear distribution
-                // This ensures: Sum of all increases = carbGap (no rounding errors, no jumps!)
-                let currentWeekTarget: number;
-                if (week === 1) {
-                  currentWeekTarget = currentIntake;
-                } else {
-                  // Calculate remainder positions for even distribution
-                  const remainderPositions: number[] = [];
-                  for (let i = 0; i < remainder; i++) {
-                    remainderPositions.push(Math.floor((i + 0.5) * protocol.totalWeeks / remainder));
-                  }
-                  // Count remainder bonuses for weeks before this week
-                  const remainderCount = remainderPositions.filter(pos => pos < week - 1).length;
-                  
-                  // Calculate intake: Start + (baseIncrease * weeks before this) + remainder bonuses
-                  currentWeekTarget = currentIntake + baseIncrease * (week - 1) + remainderCount;
+                // Fallback for backwards compatibility (if weeklyTargets not available)
+                if (weeklyTargets.length === 0) {
+                  // Legacy calculation - should not happen with new protocol
+                  const weekTarget = week === 1 ? currentIntake : 
+                    (week === protocol.totalWeeks ? targetIntake : 
+                    currentIntake + Math.floor((targetIntake - currentIntake) / protocol.totalWeeks) * (week - 1));
+                  weeklyTargets.push(weekTarget);
                 }
                 
-                // For last week: Ensure exact target is reached
-                // This handles any edge cases and guarantees we reach the target
-                if (week === protocol.totalWeeks) {
-                  currentWeekTarget = targetIntake;
-                }
+                // Calculate session dosages for this week
+                const sessions = calculateWeekSessions(
+                  week,
+                  weeklyTargets,
+                  protocol.totalWeeks,
+                  currentIntake,
+                  targetIntake
+                );
                 
-                const cappedTarget = currentWeekTarget;
+                // Determine if this week has within-week progression (gradient)
+                const weekTarget = weeklyTargets[weekIndex] || currentIntake;
+                const previousWeekTarget = weekIndex > 0 ? weeklyTargets[weekIndex - 1] : currentIntake;
+                const weeklyJump = weekTarget - previousWeekTarget;
+                const hasGradient = (weeklyJump >= 6 && week !== protocol.totalWeeks);
                 
-                // ADAPTIVE LOGIK basierend auf weeklyIncrease (for backwards compatibility)
+                // For backwards compatibility: Check if we should show "test session" style
+                // (only for large weekly increases, similar to old hasKeySession logic)
                 const weeklyIncrease = protocol.weeklyIncrease;
-                const hasKeySession = weeklyIncrease >= 2.0;
-                
-                // Trainings-Dosierung (für Standard-Einheiten)
-                let trainingDosage: number;
-                if (hasKeySession) {
-                  // Große Steigerung: Vorherige Woche Schlüssel-Dosierung
-                  // Use linear distribution for previous week's key session dosage
-                  if (week === 1) {
-                    trainingDosage = currentIntake;
-                  } else {
-                    // Previous week's key session dosage
-                    const prevWeek = week - 1;
-                    const remainderPositions: number[] = [];
-                    for (let i = 0; i < remainder; i++) {
-                      remainderPositions.push(Math.floor((i + 0.5) * protocol.totalWeeks / remainder));
-                    }
-                    const remainderCount = remainderPositions.filter(pos => pos < prevWeek).length;
-                    trainingDosage = currentIntake + baseIncrease * (prevWeek - 1) + remainderCount;
-                  }
-                } else {
-                  // Kleine Steigerung: Alle Einheiten gleich (progressive Dosierung)
-                  trainingDosage = cappedTarget;
-                }
-                
-                // Schlüsseleinheit-Dosierung (nur bei großen Steigerungen)
-                // Use linear distribution for key session dosage
-                let keySessionDosage: number;
-                if (week === 1) {
-                  // Week 1: Test first increase
-                  const remainderPositions: number[] = [];
-                  for (let i = 0; i < remainder; i++) {
-                    remainderPositions.push(Math.floor((i + 0.5) * protocol.totalWeeks / remainder));
-                  }
-                  const remainderCount = remainderPositions.filter(pos => pos < 1).length;
-                  keySessionDosage = Math.min(currentIntake + baseIncrease + remainderCount, targetIntake);
-                } else if (week === protocol.totalWeeks) {
-                  // Last week: explicit target
-                  keySessionDosage = targetIntake;
-                } else {
-                  // Current week target intake using linear distribution
-                  const remainderPositions: number[] = [];
-                  for (let i = 0; i < remainder; i++) {
-                    remainderPositions.push(Math.floor((i + 0.5) * protocol.totalWeeks / remainder));
-                  }
-                  const remainderCount = remainderPositions.filter(pos => pos < week).length;
-                  keySessionDosage = Math.min(currentIntake + baseIncrease * week + remainderCount, targetIntake);
-                }
+                const showTestSessionStyle = weeklyIncrease >= 2.0 && hasGradient;
                 
                 // Anzahl der Standard-Einheiten
-                const numStandardSessions = hasKeySession ? (state.frequency || 2) - 1 : (state.frequency || 2);
+                const numStandardSessions = showTestSessionStyle ? (state.frequency || 2) - 1 : (state.frequency || 2);
                 
                 return (
                   <div key={week} className="bg-white rounded-xl border border-black/10 overflow-hidden">
@@ -301,40 +252,50 @@ export default function ProtocolResultsScreen() {
                     
                     {/* Sessions */}
                     <div className="p-4 space-y-3">
-                      {hasKeySession ? (
+                      {showTestSessionStyle ? (
                         <>
                           {/* Standard-Einheiten zuerst (bei großen Steigerungen) */}
                           {/* Bei 3+ Einheiten: Jede Standard-Einheit separat auflisten */}
                           {numStandardSessions > 0 && (state.frequency && state.frequency >= 3 ? (
                             // 3+ Einheiten: Standard-Einheiten separat auflisten
-                            Array.from({ length: numStandardSessions }, (_, idx) => (
-                              <div key={idx} className="p-3 bg-white rounded-lg border border-black/5">
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Standard-Einheit</span>
-                                      {state.frequency && state.frequency >= 3 && idx === 0 && (
-                                        <span className="text-xs text-black/50">(z.B. Montag)</span>
-                                      )}
-                                      {state.frequency && state.frequency >= 3 && idx === 1 && (
-                                        <span className="text-xs text-black/50">(z.B. Mittwoch)</span>
-                                      )}
+                            Array.from({ length: numStandardSessions }, (_, idx) => {
+                              // For gradient weeks, show progressive dosages
+                              let sessionDosage = sessions.session1;
+                              if (hasGradient) {
+                                if (idx === 0) sessionDosage = sessions.session1;
+                                else if (idx === 1) sessionDosage = sessions.session2;
+                                else sessionDosage = sessions.session2; // Use session2 for additional sessions
+                              }
+                              
+                              return (
+                                <div key={idx} className="p-3 bg-white rounded-lg border border-black/5">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Standard-Einheit</span>
+                                        {state.frequency && state.frequency >= 3 && idx === 0 && (
+                                          <span className="text-xs text-black/50">(z.B. Montag)</span>
+                                        )}
+                                        {state.frequency && state.frequency >= 3 && idx === 1 && (
+                                          <span className="text-xs text-black/50">(z.B. Mittwoch)</span>
+                                        )}
+                                      </div>
+                                      <p className="text-sm text-black/60 mb-1">
+                                        Lange Einheit über 2 Stunden – Bereitet den Darm vor
+                                      </p>
+                                      <p className="text-xs text-black/50 font-medium">
+                                        Moderate Intensität (Zone 2, Aerobe Zone)
+                                      </p>
                                     </div>
-                                    <p className="text-sm text-black/60 mb-1">
-                                      Lange Einheit über 2 Stunden – Bereitet den Darm vor
-                                    </p>
-                                    <p className="text-xs text-black/50 font-medium">
-                                      Moderate Intensität (Zone 2, Aerobe Zone)
-                                    </p>
-                                  </div>
-                                  <div className="flex-shrink-0 text-right">
-                                    <p className="text-lg font-semibold text-black">
-                                      {trainingDosage}g/h
-                                    </p>
+                                    <div className="flex-shrink-0 text-right">
+                                      <p className="text-lg font-semibold text-black">
+                                        {sessionDosage}g/h
+                                      </p>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))
+                              );
+                            })
                           ) : (
                             // 2 Einheiten: Eine Standard-Einheit
                             <div className="p-3 bg-white rounded-lg border border-black/5">
@@ -352,7 +313,7 @@ export default function ProtocolResultsScreen() {
                                 </div>
                                 <div className="flex-shrink-0 text-right">
                                   <p className="text-lg font-semibold text-black">
-                                    {trainingDosage}g/h
+                                    {hasGradient ? sessions.session1 : sessions.session1}g/h
                                   </p>
                                 </div>
                               </div>
@@ -376,7 +337,7 @@ export default function ProtocolResultsScreen() {
                               </div>
                               <div className="flex-shrink-0 text-right">
                                 <p className="text-lg font-semibold text-black">
-                                  {keySessionDosage}g/h
+                                  {hasGradient ? sessions.session3 : sessions.session1}g/h
                                 </p>
                               </div>
                             </div>
@@ -409,7 +370,7 @@ export default function ProtocolResultsScreen() {
                               </div>
                               <div className="flex-shrink-0 text-right">
                                 <p className="text-lg font-semibold text-black">
-                                  {trainingDosage}g/h
+                                  {sessions.session1}g/h
                                 </p>
                               </div>
                             </div>

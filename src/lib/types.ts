@@ -46,8 +46,10 @@ export type CalculationResult = TimeSavingsResult;
 export interface ProtocolResult {
   totalWeeks: number;
   weeklyIncrease: number; // For backwards compatibility (average)
-  baseIncrease: number; // Base increase per week (whole grams) - for linear distribution
-  remainder: number; // Remainder to be distributed evenly - for linear distribution
+  baseIncrease: number; // @deprecated - kept for backwards compatibility
+  remainder: number; // @deprecated - kept for backwards compatibility
+  weeklyTargets: number[]; // NEW: Array of target intake per week (0-indexed: week 1 = index 0)
+  incrementSchedule: number[]; // NEW: Week indices (0-indexed) where 3g increments occur
   baseWeeks: number;
   giTimeModifier: number;
   gapModifier: number;

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { useApp } from '@/lib/store';
-import { calculateProtocol, recommendTimeline, getIntakeMidpoint } from '@/lib/calculations';
+import { calculateProtocol, recommendTimeline, getIntakeMidpoint, isValidProtocolDuration } from '@/lib/calculations';
 import { giFrequencyToPercent, isShortDistanceEvent } from '@/lib/types';
 import type { TimelineChoice } from '@/lib/types';
 
@@ -45,6 +45,23 @@ export default function ProtocolSetupScreen() {
 
   const handleGenerate = () => {
     const selectedTimeline = timeline || safetyAdjustedTimeline;
+    
+    // Safety check: Ensure selected timeline is valid
+    if (!validDurations[selectedTimeline]) {
+      // If selected timeline is invalid, use the shortest valid one (or shortest available)
+      const validTimeline = timelineOptions.find(opt => validDurations[opt.value])?.value || '4-6-weeks';
+      const protocol = calculateProtocol(
+        calcResult.carbGap,
+        giPercent,
+        validTimeline,
+        currentIntake,
+        calcResult.target
+      );
+      setProtocolResult(protocol);
+      router.push('/protocol-results');
+      return;
+    }
+    
     const protocol = calculateProtocol(
       calcResult.carbGap,
       giPercent,
@@ -56,11 +73,31 @@ export default function ProtocolSetupScreen() {
     router.push('/protocol-results');
   };
 
-  const timelineOptions: { value: TimelineChoice; label: string; desc: string; rate: string }[] = [
-    { value: '4-6-weeks', label: '4 Wochen', desc: 'Schnelle Progression, hohe Trainingsdisziplin nötig', rate: '~2g/Woche' },
-    { value: '6-10-weeks', label: '8 Wochen', desc: 'Gleichgewicht aus Tempo und Anpassung', rate: '~1,2g/Woche' },
-    { value: '10+-weeks', label: '12 Wochen', desc: 'Konservativ, geringstes GI-Risiko', rate: '~0,7g/Woche' },
+  const timelineOptions: { value: TimelineChoice; label: string; desc: string; rate: string; baseWeeks: number }[] = [
+    { value: '4-6-weeks', label: '4 Wochen', desc: 'Schnelle Progression, hohe Trainingsdisziplin nötig', rate: '~2g/Woche', baseWeeks: 4 },
+    { value: '6-10-weeks', label: '8 Wochen', desc: 'Gleichgewicht aus Tempo und Anpassung', rate: '~1,2g/Woche', baseWeeks: 8 },
+    { value: '10+-weeks', label: '12 Wochen', desc: 'Konservativ, geringstes GI-Risiko', rate: '~0,7g/Woche', baseWeeks: 12 },
   ];
+
+  // Calculate which durations are valid (won't be auto-shortened)
+  const validDurations = useMemo(() => {
+    if (!calcResult) return { '4-6-weeks': true, '6-10-weeks': true, '10+-weeks': true };
+    
+    const carbGap = calcResult.carbGap;
+    const valid: Record<TimelineChoice, boolean> = {
+      '4-6-weeks': isValidProtocolDuration(4, carbGap, giPercent),
+      '6-10-weeks': isValidProtocolDuration(8, carbGap, giPercent),
+      '10+-weeks': isValidProtocolDuration(12, carbGap, giPercent),
+    };
+
+    // Edge case: If all durations are invalid, keep shortest (4 weeks) enabled
+    const allInvalid = !valid['4-6-weeks'] && !valid['6-10-weeks'] && !valid['10+-weeks'];
+    if (allInvalid) {
+      valid['4-6-weeks'] = true;
+    }
+
+    return valid;
+  }, [calcResult, giPercent]);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
@@ -98,23 +135,37 @@ export default function ProtocolSetupScreen() {
           <div className="space-y-4">
             <h2 className="text-label">Wähle deinen Zeitrahmen</h2>
             <div className="space-y-3">
-              {timelineOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setTimeline(option.value)}
-                  className={`w-full p-5 rounded-xl border text-left transition-all ${
-                    (timeline || safetyAdjustedTimeline) === option.value
-                      ? 'border-black bg-black text-white'
-                      : 'border-black/10 hover:border-black/30 bg-white'
-                  }`}
-                >
+              {timelineOptions.map((option) => {
+                const isValid = validDurations[option.value];
+                const isSelected = (timeline || safetyAdjustedTimeline) === option.value;
+                const isDisabled = !isValid;
+
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      if (!isDisabled) {
+                        setTimeline(option.value);
+                      }
+                    }}
+                    disabled={isDisabled}
+                    className={`w-full p-5 rounded-xl border text-left transition-all ${
+                      isDisabled
+                        ? 'border-black/5 bg-black/5 text-black/40 cursor-not-allowed'
+                        : isSelected
+                        ? 'border-black bg-black text-white'
+                        : 'border-black/10 hover:border-black/30 bg-white'
+                    }`}
+                  >
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{option.label}</span>
                         {safetyAdjustedTimeline === option.value && (
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            (timeline || safetyAdjustedTimeline) === option.value
+                            isDisabled
+                              ? 'bg-black/5 text-black/30'
+                              : (timeline || safetyAdjustedTimeline) === option.value
                               ? 'bg-white/20 text-white'
                               : 'bg-black/10 text-black/70'
                           }`}>
@@ -123,7 +174,9 @@ export default function ProtocolSetupScreen() {
                         )}
                       </div>
                       <p className={`text-sm mt-1 ${
-                        (timeline || safetyAdjustedTimeline) === option.value
+                        isDisabled
+                          ? 'text-black/30'
+                          : (timeline || safetyAdjustedTimeline) === option.value
                           ? 'text-white/80'
                           : 'text-black/60'
                       }`}>
@@ -131,15 +184,18 @@ export default function ProtocolSetupScreen() {
                       </p>
                     </div>
                     <span className={`text-sm ${
-                      (timeline || safetyAdjustedTimeline) === option.value
+                      isDisabled
+                        ? 'text-black/30'
+                        : (timeline || safetyAdjustedTimeline) === option.value
                         ? 'text-white/80'
                         : 'text-black/60'
                     }`}>
                       {option.rate}
                     </span>
                   </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

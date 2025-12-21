@@ -214,6 +214,67 @@ export function recommendTimeline(carbGap: number, giFrequencyPercent: number): 
   }
 }
 
+// Constants
+export const MIN_WEEKLY_INCREASE = 2.5; // Minimum weekly increase in g/h
+
+/**
+ * Calculate modifiers for protocol duration (shared logic for validation and calculation)
+ */
+export function calculateProtocolModifiers(
+  giFrequencyPercent: number,
+  carbGap: number
+): { giTimeModifier: number; gapModifier: number } {
+  // GI frequency modifier
+  let giTimeModifier: number;
+  if (giFrequencyPercent < 10) {
+    giTimeModifier = 1.0;
+  } else if (giFrequencyPercent < 30) {
+    giTimeModifier = 1.2;
+  } else if (giFrequencyPercent < 50) {
+    giTimeModifier = 1.4;
+  } else {
+    giTimeModifier = 1.6;
+  }
+
+  // Carb gap modifier
+  let gapModifier: number;
+  if (carbGap <= 15) {
+    gapModifier = 0.9;
+  } else if (carbGap <= 25) {
+    gapModifier = 1.0;
+  } else if (carbGap <= 40) {
+    gapModifier = 1.2;
+  } else {
+    gapModifier = 1.4;
+  }
+
+  return { giTimeModifier, gapModifier };
+}
+
+/**
+ * Validate if a protocol duration would be valid (not auto-shortened)
+ * Returns true if the duration is valid, false if it would be auto-shortened
+ */
+export function isValidProtocolDuration(
+  baseWeeks: number,
+  carbGap: number,
+  giFrequencyPercent: number
+): boolean {
+  if (carbGap <= 0) return true; // No gap means all durations are valid
+
+  const { giTimeModifier, gapModifier } = calculateProtocolModifiers(giFrequencyPercent, carbGap);
+  
+  // Calculate total weeks after modifiers
+  let totalWeeks = baseWeeks * giTimeModifier * gapModifier;
+  totalWeeks = Math.round(totalWeeks);
+
+  // Calculate weekly increase
+  const weeklyIncrease = carbGap / totalWeeks;
+
+  // Check if this would trigger auto-shortening
+  return weeklyIncrease >= MIN_WEEKLY_INCREASE;
+}
+
 /**
  * Calculate protocol length using the complete 5-step formula
  */
@@ -234,29 +295,8 @@ export function calculateProtocol(
     baseWeeks = 12;
   }
 
-  // STEP 2: GI frequency modifier (THE TIMELINE MULTIPLIER)
-  let giTimeModifier: number;
-  if (giFrequencyPercent < 10) {
-    giTimeModifier = 1.0;
-  } else if (giFrequencyPercent < 30) {
-    giTimeModifier = 1.2;
-  } else if (giFrequencyPercent < 50) {
-    giTimeModifier = 1.4;
-  } else {
-    giTimeModifier = 1.6;
-  }
-
-  // STEP 3: Carb gap modifier
-  let gapModifier: number;
-  if (carbGap <= 15) {
-    gapModifier = 0.9;
-  } else if (carbGap <= 25) {
-    gapModifier = 1.0;
-  } else if (carbGap <= 40) {
-    gapModifier = 1.2;
-  } else {
-    gapModifier = 1.4;
-  }
+  // STEP 2-3: Calculate modifiers (using shared function)
+  const { giTimeModifier, gapModifier } = calculateProtocolModifiers(giFrequencyPercent, carbGap);
 
   // STEP 4: Calculate total weeks
   // When user explicitly chooses a timeline, respect their choice as the primary target
@@ -266,7 +306,6 @@ export function calculateProtocol(
 
   // For user-selected timelines, prioritize respecting their choice
   // Only apply minimum weekly increase constraint if it would result in a significantly different timeline
-  const MIN_WEEKLY_INCREASE = 2.5; // Reduced from 3 to allow more flexibility for user choices
   const MAX_WEEKS_SMALL_GAP = 8; // for carbGap ≤ 15
 
   let weeklyIncrease = carbGap / totalWeeks;
@@ -306,14 +345,20 @@ export function calculateProtocol(
   // Final safety check: ensure minimum of 2 weeks
   if (totalWeeks < 2) totalWeeks = 2;
 
-  // Calculate linear distribution for actual progression
-  // This guarantees: Sum of all increases = carbGap (no rounding errors!)
-  const baseIncrease = Math.floor(carbGap / totalWeeks);
-  const remainder = carbGap % totalWeeks;
+  // NEW CORE LOGIC: Increment-based progression
+  const { weeklyTargets, incrementSchedule } = calculateIncrementSchedule(
+    carbGap,
+    totalWeeks,
+    currentIntake,
+    targetIntake
+  );
 
   // For backwards compatibility: Calculate weeklyIncrease as average
-  // (not directly used for progression - baseIncrease + remainder distribution is used)
   weeklyIncrease = carbGap / totalWeeks;
+
+  // For backwards compatibility: Keep deprecated fields
+  const baseIncrease = Math.floor(carbGap / totalWeeks);
+  const remainder = carbGap % totalWeeks;
 
   // Generate phase structure
   const phases = generatePhases(currentIntake, targetIntake, totalWeeks);
@@ -321,14 +366,194 @@ export function calculateProtocol(
   return {
     totalWeeks,
     weeklyIncrease: Math.max(MIN_WEEKLY_INCREASE, Math.round(weeklyIncrease)), // For backwards compatibility (average)
-    baseIncrease, // Base increase per week (whole grams) - for linear distribution
-    remainder, // Remainder to be distributed evenly - for linear distribution
+    baseIncrease, // @deprecated - kept for backwards compatibility
+    remainder, // @deprecated - kept for backwards compatibility
+    weeklyTargets, // NEW: Array of target intake per week (0-indexed)
+    incrementSchedule, // NEW: Week indices where 3g increments occur
     baseWeeks,
     giTimeModifier,
     gapModifier,
     phases,
     recommendedTimeline: recommendTimeline(carbGap, giFrequencyPercent),
   };
+}
+
+/**
+ * Calculate increment schedule and weekly targets using 3g minimum increments
+ */
+function calculateIncrementSchedule(
+  carbGap: number,
+  totalWeeks: number,
+  currentIntake: number,
+  targetIntake: number
+): { weeklyTargets: number[]; incrementSchedule: number[] } {
+  // Edge case: no gap or negative gap
+  if (carbGap <= 0) {
+    return {
+      weeklyTargets: Array(totalWeeks).fill(currentIntake),
+      incrementSchedule: [],
+    };
+  }
+
+  const MIN_INCREMENT = 3; // Never suggest <3g changes
+
+  // Calculate how many 3g increments are needed
+  const numberOfIncrements = Math.floor(carbGap / MIN_INCREMENT);
+  const finalAdjustment = carbGap % MIN_INCREMENT; // Leftover grams (<3g)
+
+  // Schedule increments evenly across protocol
+  const incrementSchedule: number[] = []; // Week indices where increments happen (0-indexed)
+
+  if (numberOfIncrements === 0) {
+    // Gap < 3g: single increment in final week
+    incrementSchedule.push(totalWeeks - 1); // 0-indexed
+    
+  } else if (numberOfIncrements >= totalWeeks) {
+    // More increments than weeks: multiple increments per week needed
+    // This shouldn't happen with modifiers, but guard against it
+    // Distribute as evenly as possible
+    for (let i = 0; i < totalWeeks; i++) {
+      incrementSchedule.push(i);
+    }
+    
+  } else {
+    // Normal case: fewer increments than weeks
+    // Space them evenly across the protocol
+    const spacing = totalWeeks / numberOfIncrements;
+    
+    for (let i = 0; i < numberOfIncrements; i++) {
+      const weekIndex = Math.round(spacing * (i + 1)) - 1;
+      incrementSchedule.push(weekIndex);
+    }
+  }
+
+  // Ensure last week always contains an increment (to hit exact target)
+  if (!incrementSchedule.includes(totalWeeks - 1)) {
+    incrementSchedule.push(totalWeeks - 1);
+  }
+
+  // Sort and deduplicate
+  const uniqueSchedule = [...new Set(incrementSchedule)].sort((a, b) => a - b);
+
+  // Build week-by-week targets
+  const weeklyTargets: number[] = [];
+  let cumulativeIncrease = 0;
+
+  for (let weekIndex = 0; weekIndex < totalWeeks; weekIndex++) {
+    if (uniqueSchedule.includes(weekIndex)) {
+      // This week gets an increment
+      cumulativeIncrease += MIN_INCREMENT;
+    }
+    
+    const weekTarget = currentIntake + cumulativeIncrease;
+    weeklyTargets.push(weekTarget);
+  }
+
+  // Final week adjustment: ensure exact target
+  const projectedFinal = weeklyTargets[totalWeeks - 1];
+  if (projectedFinal !== targetIntake) {
+    // Add/subtract the difference to final week
+    const diff = targetIntake - projectedFinal;
+    weeklyTargets[totalWeeks - 1] = targetIntake;
+    
+    // If diff is significant (>= MIN_INCREMENT), we need to adjust
+    // This means our increment count was slightly off
+    if (Math.abs(diff) >= MIN_INCREMENT) {
+      // Adjust the last increment week
+      const lastIncrementWeek = uniqueSchedule[uniqueSchedule.length - 1];
+      if (lastIncrementWeek >= 0 && lastIncrementWeek < totalWeeks) {
+        weeklyTargets[lastIncrementWeek] += diff;
+        // Recalculate from that point forward
+        for (let i = lastIncrementWeek + 1; i < totalWeeks; i++) {
+          weeklyTargets[i] = weeklyTargets[lastIncrementWeek];
+        }
+        weeklyTargets[totalWeeks - 1] = targetIntake; // Final week always exact
+      }
+    } else {
+      // Small adjustment (<3g): just add to final week
+      weeklyTargets[totalWeeks - 1] = targetIntake;
+    }
+  }
+
+  return {
+    weeklyTargets,
+    incrementSchedule: uniqueSchedule,
+  };
+}
+
+/**
+ * Calculate session dosages for a specific week
+ * Returns dosages for up to 3 sessions per week
+ */
+export function calculateWeekSessions(
+  week: number,           // 1-indexed week number
+  weeklyTargets: number[], // Array of targets per week (0-indexed)
+  totalWeeks: number,
+  currentIntake: number,
+  targetIntake: number
+): { session1: number; session2: number; session3: number } {
+  const MIN_INCREMENT = 3;
+  const weekIndex = week - 1; // Convert to 0-indexed
+  const weekTarget = weeklyTargets[weekIndex];
+  
+  // Determine if this week has within-week progression
+  let withinWeekIncrement = 0;
+  
+  if (week === totalWeeks) {
+    // Last week: all sessions at target (consolidation)
+    withinWeekIncrement = 0;
+    
+  } else if (weekIndex > 0) {
+    // Check if there's a jump from previous week
+    const previousWeekTarget = weeklyTargets[weekIndex - 1];
+    const weeklyJump = weekTarget - previousWeekTarget;
+    
+    if (weeklyJump >= 6) {
+      // Large jump (6+g): add small gradient within week
+      // Use 30% of jump, max 3g
+      withinWeekIncrement = Math.min(3, Math.floor(weeklyJump * 0.3));
+    } else {
+      // Small/no jump: flat week
+      withinWeekIncrement = 0;
+    }
+  }
+  
+  // Calculate sessions
+  if (withinWeekIncrement === 0) {
+    // Flat week: all sessions identical
+    return {
+      session1: weekTarget,
+      session2: weekTarget,
+      session3: weekTarget
+    };
+    
+  } else {
+    // Gradient week: progressive within week
+    const session1 = weekTarget;
+    const session2 = weekTarget + Math.round(withinWeekIncrement * 0.5);
+    const session3 = weekTarget + withinWeekIncrement;
+    
+    // Enforce 3g minimum between sessions (or make them equal)
+    let finalSession2 = session2;
+    let finalSession3 = session3;
+    
+    if (session2 - session1 < MIN_INCREMENT) {
+      finalSession2 = session1;
+    }
+    if (finalSession3 - finalSession2 < MIN_INCREMENT) {
+      finalSession3 = finalSession2;
+    }
+    
+    // Cap at target
+    finalSession2 = Math.min(finalSession2, targetIntake);
+    finalSession3 = Math.min(finalSession3, targetIntake);
+    
+    return {
+      session1: session1,
+      session2: finalSession2,
+      session3: finalSession3
+    };
+  }
 }
 
 /**
