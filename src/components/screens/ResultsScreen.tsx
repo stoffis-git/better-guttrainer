@@ -202,7 +202,7 @@ export default function ResultsScreen() {
             href="/protocol-setup"
                 className="btn-primary bg-black text-white hover:bg-black hover:text-white px-12 py-4 text-lg md:text-xl inline-block"
           >
-                Mein {nextStep}-Protokoll downloaden
+                Mein {nextStep}g/h-Protokoll downloaden
           </a>
             </div>
           </div>
@@ -322,7 +322,7 @@ export default function ResultsScreen() {
 
             {/* Max potential at 90g/h – nur anzeigen, wenn Hauptziel nicht 90 ist UND aktuelle Aufnahme <90g/h */}
             {nextStep !== 90 && currentIntakeNum < 90 && (
-              <p className="mt-4 text-lg md:text-xl text-black font-medium">
+              <p className="mt-10 md:mt-12 text-lg md:text-xl text-black font-medium">
                 Maximales Potenzial bei 90 g/h:{' '}
                 <span className="font-semibold">
                   {maxPotential90.minutesLow}-{maxPotential90.minutesHigh} Minuten gesamt

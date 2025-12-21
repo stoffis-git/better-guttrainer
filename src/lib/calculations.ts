@@ -259,21 +259,70 @@ export function calculateProtocol(
   }
 
   // STEP 4: Calculate total weeks
+  // When user explicitly chooses a timeline, respect their choice as the primary target
+  // Apply modifiers but ensure we stay close to the chosen baseWeeks
   let totalWeeks = baseWeeks * giTimeModifier * gapModifier;
   totalWeeks = Math.round(totalWeeks);
 
-  // Ensure minimum of 2 weeks
+  // For user-selected timelines, prioritize respecting their choice
+  // Only apply minimum weekly increase constraint if it would result in a significantly different timeline
+  const MIN_WEEKLY_INCREASE = 2.5; // Reduced from 3 to allow more flexibility for user choices
+  const MAX_WEEKS_SMALL_GAP = 8; // for carbGap ≤ 15
+
+  let weeklyIncrease = carbGap / totalWeeks;
+
+  // Only adjust if weekly increase is very small AND the adjustment wouldn't drastically change the timeline
+  if (weeklyIncrease < MIN_WEEKLY_INCREASE && carbGap > 0) {
+    const maxWeeksByIncrease = Math.floor(carbGap / MIN_WEEKLY_INCREASE);
+    
+    // If the calculated max weeks is close to baseWeeks (within 1 week), use baseWeeks
+    // Otherwise, use the calculated value but ensure we don't go too far from baseWeeks
+    if (Math.abs(maxWeeksByIncrease - baseWeeks) <= 1) {
+      // Stay with baseWeeks if close
+      totalWeeks = baseWeeks;
+    } else if (maxWeeksByIncrease < baseWeeks) {
+      // If we can't maintain baseWeeks, use calculated value but ensure reasonable minimum
+      if (carbGap <= 15) {
+        totalWeeks = Math.min(maxWeeksByIncrease, MAX_WEEKS_SMALL_GAP);
+      } else {
+        totalWeeks = Math.max(4, maxWeeksByIncrease);
+      }
+    } else {
+      // If calculated weeks is higher, use it (user gets a more conservative timeline)
+      totalWeeks = maxWeeksByIncrease;
+    }
+    
+    // Recalculate weekly increase
+    weeklyIncrease = carbGap / totalWeeks;
+  } else {
+    // If weekly increase is acceptable, ensure we respect baseWeeks as minimum
+    // (unless modifiers suggest a longer timeline, which is fine)
+    if (totalWeeks < baseWeeks) {
+      totalWeeks = baseWeeks;
+      weeklyIncrease = carbGap / totalWeeks;
+    }
+  }
+
+  // Final safety check: ensure minimum of 2 weeks
   if (totalWeeks < 2) totalWeeks = 2;
 
-  // STEP 5: Calculate weekly progression
-  const weeklyIncrease = carbGap / totalWeeks;
+  // Calculate linear distribution for actual progression
+  // This guarantees: Sum of all increases = carbGap (no rounding errors!)
+  const baseIncrease = Math.floor(carbGap / totalWeeks);
+  const remainder = carbGap % totalWeeks;
+
+  // For backwards compatibility: Calculate weeklyIncrease as average
+  // (not directly used for progression - baseIncrease + remainder distribution is used)
+  weeklyIncrease = carbGap / totalWeeks;
 
   // Generate phase structure
   const phases = generatePhases(currentIntake, targetIntake, totalWeeks);
 
   return {
     totalWeeks,
-    weeklyIncrease: Math.round(weeklyIncrease * 10) / 10,
+    weeklyIncrease: Math.max(MIN_WEEKLY_INCREASE, Math.round(weeklyIncrease)), // For backwards compatibility (average)
+    baseIncrease, // Base increase per week (whole grams) - for linear distribution
+    remainder, // Remainder to be distributed evenly - for linear distribution
     baseWeeks,
     giTimeModifier,
     gapModifier,

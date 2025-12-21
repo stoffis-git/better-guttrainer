@@ -45,7 +45,9 @@ export type CalculationResult = TimeSavingsResult;
 
 export interface ProtocolResult {
   totalWeeks: number;
-  weeklyIncrease: number;
+  weeklyIncrease: number; // For backwards compatibility (average)
+  baseIncrease: number; // Base increase per week (whole grams) - for linear distribution
+  remainder: number; // Remainder to be distributed evenly - for linear distribution
   baseWeeks: number;
   giTimeModifier: number;
   gapModifier: number;
