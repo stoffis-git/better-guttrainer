@@ -35,6 +35,37 @@ export default function ResultsScreen() {
   const { state, setCalculationResult } = useApp();
   const [showDetails, setShowDetails] = useState(false);
 
+  const handleShare = async () => {
+    const shareData = {
+      title: "better Gut-Training Tool",
+      text: "Berechne dein individuelles Gut-Training Protokoll",
+      url: window.location.origin,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled, ignore
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.textContent = 'Link kopiert';
+        toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm z-50';
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy to clipboard', err);
+      }
+    }
+  };
+
   // Fast path: if intake already >=120g/h, congratulate and finish
   // This check must come BEFORE profile validation to handle early exits from questionnaire
   if (state.currentIntake !== undefined) {
@@ -695,6 +726,22 @@ export default function ResultsScreen() {
         </div>
         </div>
       </section>
+
+      {/* Share Button */}
+      <footer className="px-6 pt-12 pb-24">
+        <div className="max-w-xl mx-auto">
+          <button
+            onClick={handleShare}
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 border border-black/10 hover:border-black/30 bg-white text-black rounded-full transition-colors font-medium"
+            aria-label="Tool teilen"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            Tool Teilen
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -39,6 +39,37 @@ export default function ProtocolResultsScreen() {
     window.print();
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: "better Gut-Training Tool",
+      text: "Berechne dein individuelles Gut-Training Protokoll",
+      url: window.location.origin,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled, ignore
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.textContent = 'Link kopiert';
+        toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm z-50';
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy to clipboard', err);
+      }
+    }
+  };
+
   // Sport-specific training guidance
   const sportGuidance = {
     triathlon: {
@@ -107,27 +138,16 @@ export default function ProtocolResultsScreen() {
   return (
     <div className="min-h-screen bg-white text-black">
       {/* Header */}
-      <header className="px-6 py-6 border-b border-black/5">
-        <div className="max-w-3xl mx-auto flex justify-between items-center">
-          <a
-            href="/protocol-setup"
-            className="flex items-center gap-2 text-black/70 hover:text-black transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Zurück
-          </a>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-black/80 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Protokoll downloaden
-          </button>
-        </div>
+      <header className="px-6 pt-6 pb-4">
+        <a
+          href="/protocol-setup"
+          className="flex items-center gap-2 text-sm md:text-base text-black/70 hover:text-black transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Zurück zum Ergebnis
+        </a>
       </header>
 
       {/* Hero */}
@@ -384,79 +404,6 @@ export default function ProtocolResultsScreen() {
             </div>
           </div>
 
-          {/* Einheiten-Definition */}
-          <div className="space-y-4">
-            <h2 className="text-label text-black/70">Einheiten-Definition</h2>
-            
-            {protocol.weeklyIncrease >= 2.0 ? (
-              /* Große Steigerung: Unterscheidung Standard/Test-Einheit */
-              <>
-                <div className="p-6 bg-white rounded-xl border border-black/10 space-y-4">
-                  <div>
-                    <h3 className="font-medium text-black mb-2">Standard-Einheiten (zu Beginn der Woche)</h3>
-                    <p className="text-sm text-black/70 mb-3">
-                      Verwenden die <strong>vorherige Woche Zielzufuhr</strong> (in Woche 1 = Start-Dosierung). 
-                      Bereiten den Darm vor und ermöglichen progressive Adaption ohne Überforderung.
-                    </p>
-                  </div>
-                </div>
-                
-            <div className="p-6 bg-white rounded-xl border border-black/10 space-y-4">
-                  <div>
-                    <h3 className="font-medium text-black mb-2">Test-Einheit (zum Ende der Woche)</h3>
-                    <p className="text-sm text-black/70 mb-3">
-                      Testet die <strong>aktuelle Woche Zielzufuhr</strong> – die neue, höhere Stufe. 
-                      <strong> Entscheidungsmoment:</strong> Bei erfolgreicher Toleranz Freigabe für die nächste Woche. 
-                      Bei Problemen: Aktuelles Level halten oder reduzieren.
-                    </p>
-                  </div>
-              <div>
-                    <p className="font-medium text-black mb-1">Zentrale Einheit: {guidance.session}</p>
-                    <p className="text-sm text-black/60">Warum: {guidance.why}</p>
-              </div>
-              <div>
-                    <p className="text-sm font-medium text-black/70 mb-2">Ablauf:</p>
-                <ul className="space-y-1">
-                  {guidance.strategy.map((item, idx) => (
-                    <li key={idx} className="text-sm text-black/70 flex items-start gap-2">
-                      <span className="text-black/40">•</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                  </div>
-                </div>
-              </>
-            ) : (
-              /* Kleine Steigerung: Vereinfachte Strategie */
-              <div className="p-6 bg-white rounded-xl border border-black/10 space-y-4">
-                <div>
-                  <h3 className="font-medium text-black mb-2">Lange Einheiten</h3>
-                  <p className="text-sm text-black/70 mb-3">
-                    Bei kleinen wöchentlichen Steigerungen verwenden <strong>alle Einheiten die gleiche progressive Dosierung</strong> 
-                    (aktuelle Woche Zielzufuhr). Keine Unterscheidung zwischen Standard und Test-Einheit nötig.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-black mb-1">Zentrale Einheit: {guidance.session}</p>
-                  <p className="text-sm text-black/60">Warum: {guidance.why}</p>
-              </div>
-              <div>
-                  <p className="text-sm font-medium text-black/70 mb-2">Ablauf:</p>
-                <ul className="space-y-1">
-                    {guidance.strategy.map((item, idx) => (
-                    <li key={idx} className="text-sm text-black/70 flex items-start gap-2">
-                      <span className="text-black/40">•</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            )}
-            
-          </div>
-
           {/* Progress Tracking */}
           <div className="space-y-4">
             <h2 className="text-label text-black/70">Fortschritt verfolgen</h2>
@@ -493,7 +440,7 @@ export default function ProtocolResultsScreen() {
         <div className="max-w-3xl mx-auto space-y-4">
           <button
             onClick={handlePrint}
-            className="w-full bg-black text-white px-6 py-4 rounded-lg hover:bg-black/80 transition-colors flex items-center justify-center gap-2 font-medium"
+            className="w-full bg-black text-white px-6 py-4 rounded-full hover:bg-black/80 transition-colors flex items-center justify-center gap-2 font-medium"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -506,6 +453,16 @@ export default function ProtocolResultsScreen() {
           >
             Neue Berechnung starten
           </a>
+          <button
+            onClick={handleShare}
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 border border-black/10 hover:border-black/30 bg-white text-black rounded-full transition-colors font-medium"
+            aria-label="Tool teilen"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            Tool Teilen
+          </button>
         </div>
       </footer>
     </div>
