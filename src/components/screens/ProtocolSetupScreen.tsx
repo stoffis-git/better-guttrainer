@@ -10,8 +10,14 @@ import type { TimelineChoice } from '@/lib/types';
 export default function ProtocolSetupScreen() {
   const router = useRouter();
   const { state, setProtocolResult, setAnswer } = useApp();
-  const [timeline, setTimeline] = useState<TimelineChoice | null>(null);
   const frequency = state.frequency || 2;
+  
+  // Persist timeline selection in state to survive navigation
+  const timeline = state.selectedTimeline || null;
+  
+  const handleTimelineSelect = (selected: TimelineChoice) => {
+    setAnswer('selectedTimeline', selected);
+  };
 
   const calcResult = state.calculationResult;
   const currentIntake = getIntakeMidpoint(state.currentIntake!);
@@ -145,7 +151,7 @@ export default function ProtocolSetupScreen() {
                     key={option.value}
                     onClick={() => {
                       if (!isDisabled) {
-                        setTimeline(option.value);
+                        handleTimelineSelect(option.value);
                       }
                     }}
                     disabled={isDisabled}

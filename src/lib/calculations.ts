@@ -285,74 +285,103 @@ export function calculateProtocol(
   currentIntake: number,
   targetIntake: number
 ): ProtocolResult {
-  // STEP 1: Base weeks from user choice
-  let baseWeeks: number;
+  // STEP 1: Base weeks from user choice - USER SELECTION IS FINAL
+  let totalWeeks: number;
   if (timelineChoice === '4-6-weeks') {
-    baseWeeks = 4;
+    totalWeeks = 4;
   } else if (timelineChoice === '6-10-weeks') {
-    baseWeeks = 8;
+    totalWeeks = 8;
   } else {
-    baseWeeks = 12;
+    totalWeeks = 12;
   }
 
-  // STEP 2-3: Calculate modifiers (using shared function)
+  // STEP 2-3: Calculate modifiers (for reference only, NOT applied to totalWeeks)
   const { giTimeModifier, gapModifier } = calculateProtocolModifiers(giFrequencyPercent, carbGap);
 
-  // STEP 4: Calculate total weeks
-  // When user explicitly chooses a timeline, respect their choice as the primary target
-  // Apply modifiers but ensure we stay close to the chosen baseWeeks
-  let totalWeeks = baseWeeks * giTimeModifier * gapModifier;
-  totalWeeks = Math.round(totalWeeks);
+  // User selection is FINAL - do NOT apply modifiers to change totalWeeks
+  // Modifiers are only used for validation (disabling tiles) and reference
 
-  // For user-selected timelines, prioritize respecting their choice
-  // Only apply minimum weekly increase constraint if it would result in a significantly different timeline
-  const MAX_WEEKS_SMALL_GAP = 8; // for carbGap ≤ 15
+  // Calculate baseWeeks for reference (what user selected)
+  const baseWeeks = totalWeeks;
 
+  // Calculate weekly increase for reference (will be recalculated later)
   let weeklyIncrease = carbGap / totalWeeks;
 
-  // Only adjust if weekly increase is very small AND the adjustment wouldn't drastically change the timeline
-  if (weeklyIncrease < MIN_WEEKLY_INCREASE && carbGap > 0) {
-    const maxWeeksByIncrease = Math.floor(carbGap / MIN_WEEKLY_INCREASE);
+  // NEW CORE LOGIC: Session-based increment progression
+  // Calculate increments at the SESSION level, not week level
+  const SESSIONS_PER_WEEK = 3;
+  const totalSessions = totalWeeks * SESSIONS_PER_WEEK;
+  const MIN_SESSION_INCREMENT = 2; // Minimum 2g per session increment
+  
+  // Calculate increment per session
+  let incrementPerSession = carbGap / totalSessions;
+  
+  // Round to nearest 1g, but enforce minimum of 2g
+  let sessionIncrement = Math.round(incrementPerSession);
+  if (sessionIncrement < MIN_SESSION_INCREMENT) {
+    sessionIncrement = MIN_SESSION_INCREMENT;
+  }
+  
+  // Build all session dosages
+  const allSessionDosages: number[] = [];
+  let cumulativeIncrease = 0;
+  
+  for (let i = 0; i < totalSessions; i++) {
+    const dosage = currentIntake + cumulativeIncrease;
+    allSessionDosages.push(Math.min(dosage, targetIntake));
     
-    // If the calculated max weeks is close to baseWeeks (within 1 week), use baseWeeks
-    // Otherwise, use the calculated value but ensure we don't go too far from baseWeeks
-    if (Math.abs(maxWeeksByIncrease - baseWeeks) <= 1) {
-      // Stay with baseWeeks if close
-      totalWeeks = baseWeeks;
-    } else if (maxWeeksByIncrease < baseWeeks) {
-      // If we can't maintain baseWeeks, use calculated value but ensure reasonable minimum
-      if (carbGap <= 15) {
-        totalWeeks = Math.min(maxWeeksByIncrease, MAX_WEEKS_SMALL_GAP);
-      } else {
-        totalWeeks = Math.max(4, maxWeeksByIncrease);
-      }
-    } else {
-      // If calculated weeks is higher, use it (user gets a more conservative timeline)
-      totalWeeks = maxWeeksByIncrease;
-    }
-    
-    // Recalculate weekly increase
-    weeklyIncrease = carbGap / totalWeeks;
-  } else {
-    // If weekly increase is acceptable, ensure we respect baseWeeks as minimum
-    // (unless modifiers suggest a longer timeline, which is fine)
-    if (totalWeeks < baseWeeks) {
-      totalWeeks = baseWeeks;
-      weeklyIncrease = carbGap / totalWeeks;
+    // Only increment if we haven't reached target yet
+    if (dosage < targetIntake) {
+      cumulativeIncrease += sessionIncrement;
     }
   }
-
-  // Final safety check: ensure minimum of 2 weeks
-  if (totalWeeks < 2) totalWeeks = 2;
-
-  // NEW CORE LOGIC: Increment-based progression
-  const { weeklyTargets, incrementSchedule } = calculateIncrementSchedule(
-    carbGap,
-    totalWeeks,
-    currentIntake,
-    targetIntake
-  );
-
+  
+  // Ensure final session hits exact target
+  const finalSessionIndex = totalSessions - 1;
+  const finalDosage = allSessionDosages[finalSessionIndex];
+  if (finalDosage !== targetIntake) {
+    const diff = targetIntake - finalDosage;
+    // Distribute the difference across the last few sessions
+    const sessionsToAdjust = Math.min(3, totalSessions); // Adjust last 3 sessions or all if fewer
+    const adjustmentPerSession = Math.round(diff / sessionsToAdjust);
+    
+    for (let i = totalSessions - sessionsToAdjust; i < totalSessions; i++) {
+      if (i >= 0) {
+        allSessionDosages[i] = Math.min(
+          allSessionDosages[i] + adjustmentPerSession,
+          targetIntake
+        );
+      }
+    }
+    // Force final session to exact target
+    allSessionDosages[finalSessionIndex] = targetIntake;
+  }
+  
+  // Group sessions into weeks for weeklyTargets (for backwards compatibility)
+  const weeklyTargets: number[] = [];
+  for (let week = 0; week < totalWeeks; week++) {
+    // Use session 3 of each week as the week target
+    const session3Index = week * SESSIONS_PER_WEEK + 2;
+    weeklyTargets.push(allSessionDosages[session3Index] || targetIntake);
+  }
+  
+  // Build increment schedule (for backwards compatibility)
+  // Track which sessions have increments
+  const incrementSchedule: number[] = [];
+  for (let i = 1; i < totalSessions; i++) {
+    if (allSessionDosages[i] > allSessionDosages[i - 1]) {
+      const weekIndex = Math.floor(i / SESSIONS_PER_WEEK);
+      if (!incrementSchedule.includes(weekIndex)) {
+        incrementSchedule.push(weekIndex);
+      }
+    }
+  }
+  incrementSchedule.sort((a, b) => a - b);
+  
+  // Store session dosages for calculateWeekSessions
+  // We'll store this in a way that calculateWeekSessions can access it
+  // For now, we'll pass it through weeklyTargets and calculate on-the-fly
+  
   // For backwards compatibility: Calculate weeklyIncrease as average
   weeklyIncrease = carbGap / totalWeeks;
 
@@ -378,182 +407,77 @@ export function calculateProtocol(
   };
 }
 
-/**
- * Calculate increment schedule and weekly targets using 3g minimum increments
- */
-function calculateIncrementSchedule(
-  carbGap: number,
-  totalWeeks: number,
-  currentIntake: number,
-  targetIntake: number
-): { weeklyTargets: number[]; incrementSchedule: number[] } {
-  // Edge case: no gap or negative gap
-  if (carbGap <= 0) {
-    return {
-      weeklyTargets: Array(totalWeeks).fill(currentIntake),
-      incrementSchedule: [],
-    };
-  }
-
-  const MIN_INCREMENT = 3; // Never suggest <3g changes
-
-  // Calculate how many 3g increments are needed
-  const numberOfIncrements = Math.floor(carbGap / MIN_INCREMENT);
-  const finalAdjustment = carbGap % MIN_INCREMENT; // Leftover grams (<3g)
-
-  // Schedule increments evenly across protocol
-  const incrementSchedule: number[] = []; // Week indices where increments happen (0-indexed)
-
-  if (numberOfIncrements === 0) {
-    // Gap < 3g: single increment in final week
-    incrementSchedule.push(totalWeeks - 1); // 0-indexed
-    
-  } else if (numberOfIncrements >= totalWeeks) {
-    // More increments than weeks: multiple increments per week needed
-    // This shouldn't happen with modifiers, but guard against it
-    // Distribute as evenly as possible
-    for (let i = 0; i < totalWeeks; i++) {
-      incrementSchedule.push(i);
-    }
-    
-  } else {
-    // Normal case: fewer increments than weeks
-    // Space them evenly across the protocol
-    const spacing = totalWeeks / numberOfIncrements;
-    
-    for (let i = 0; i < numberOfIncrements; i++) {
-      const weekIndex = Math.round(spacing * (i + 1)) - 1;
-      incrementSchedule.push(weekIndex);
-    }
-  }
-
-  // Ensure last week always contains an increment (to hit exact target)
-  if (!incrementSchedule.includes(totalWeeks - 1)) {
-    incrementSchedule.push(totalWeeks - 1);
-  }
-
-  // Sort and deduplicate
-  const uniqueSchedule = [...new Set(incrementSchedule)].sort((a, b) => a - b);
-
-  // Build week-by-week targets
-  const weeklyTargets: number[] = [];
-  let cumulativeIncrease = 0;
-
-  for (let weekIndex = 0; weekIndex < totalWeeks; weekIndex++) {
-    if (uniqueSchedule.includes(weekIndex)) {
-      // This week gets an increment
-      cumulativeIncrease += MIN_INCREMENT;
-    }
-    
-    const weekTarget = currentIntake + cumulativeIncrease;
-    weeklyTargets.push(weekTarget);
-  }
-
-  // Final week adjustment: ensure exact target
-  const projectedFinal = weeklyTargets[totalWeeks - 1];
-  if (projectedFinal !== targetIntake) {
-    // Add/subtract the difference to final week
-    const diff = targetIntake - projectedFinal;
-    weeklyTargets[totalWeeks - 1] = targetIntake;
-    
-    // If diff is significant (>= MIN_INCREMENT), we need to adjust
-    // This means our increment count was slightly off
-    if (Math.abs(diff) >= MIN_INCREMENT) {
-      // Adjust the last increment week
-      const lastIncrementWeek = uniqueSchedule[uniqueSchedule.length - 1];
-      if (lastIncrementWeek >= 0 && lastIncrementWeek < totalWeeks) {
-        weeklyTargets[lastIncrementWeek] += diff;
-        // Recalculate from that point forward
-        for (let i = lastIncrementWeek + 1; i < totalWeeks; i++) {
-          weeklyTargets[i] = weeklyTargets[lastIncrementWeek];
-        }
-        weeklyTargets[totalWeeks - 1] = targetIntake; // Final week always exact
-      }
-    } else {
-      // Small adjustment (<3g): just add to final week
-      weeklyTargets[totalWeeks - 1] = targetIntake;
-    }
-  }
-
-  return {
-    weeklyTargets,
-    incrementSchedule: uniqueSchedule,
-  };
-}
 
 /**
  * Calculate session dosages for a specific week
+ * NEW: Uses session-based progression calculated in calculateProtocol
  * Returns dosages for up to 3 sessions per week
  */
 export function calculateWeekSessions(
   week: number,           // 1-indexed week number
-  weeklyTargets: number[], // Array of targets per week (0-indexed)
+  weeklyTargets: number[], // Array of targets per week (0-indexed) - used for backwards compat
   totalWeeks: number,
   currentIntake: number,
   targetIntake: number
 ): { session1: number; session2: number; session3: number } {
-  const MIN_INCREMENT = 3;
+  const SESSIONS_PER_WEEK = 3;
   const weekIndex = week - 1; // Convert to 0-indexed
-  const weekTarget = weeklyTargets[weekIndex];
   
-  // Determine if this week has within-week progression
-  let withinWeekIncrement = 0;
+  // Recalculate session dosages using the same logic as in calculateProtocol
+  // This ensures consistency
+  const carbGap = targetIntake - currentIntake;
+  const totalSessions = totalWeeks * SESSIONS_PER_WEEK;
+  const MIN_SESSION_INCREMENT = 2;
   
-  if (week === totalWeeks) {
-    // Last week: all sessions at target (consolidation)
-    withinWeekIncrement = 0;
+  // Calculate increment per session
+  let incrementPerSession = carbGap / totalSessions;
+  let sessionIncrement = Math.round(incrementPerSession);
+  if (sessionIncrement < MIN_SESSION_INCREMENT) {
+    sessionIncrement = MIN_SESSION_INCREMENT;
+  }
+  
+  // Calculate all session dosages
+  const allSessionDosages: number[] = [];
+  let cumulativeIncrease = 0;
+  
+  for (let i = 0; i < totalSessions; i++) {
+    const dosage = currentIntake + cumulativeIncrease;
+    allSessionDosages.push(Math.min(dosage, targetIntake));
     
-  } else if (weekIndex > 0) {
-    // Check if there's a jump from previous week
-    const previousWeekTarget = weeklyTargets[weekIndex - 1];
-    const weeklyJump = weekTarget - previousWeekTarget;
-    
-    if (weeklyJump >= 6) {
-      // Large jump (6+g): add small gradient within week
-      // Use 30% of jump, max 3g
-      withinWeekIncrement = Math.min(3, Math.floor(weeklyJump * 0.3));
-    } else {
-      // Small/no jump: flat week
-      withinWeekIncrement = 0;
+    if (dosage < targetIntake) {
+      cumulativeIncrease += sessionIncrement;
     }
   }
   
-  // Calculate sessions
-  if (withinWeekIncrement === 0) {
-    // Flat week: all sessions identical
-    return {
-      session1: weekTarget,
-      session2: weekTarget,
-      session3: weekTarget
-    };
+  // Ensure final session hits exact target
+  const finalSessionIndex = totalSessions - 1;
+  const finalDosage = allSessionDosages[finalSessionIndex];
+  if (finalDosage !== targetIntake) {
+    const diff = targetIntake - finalDosage;
+    const sessionsToAdjust = Math.min(3, totalSessions);
+    const adjustmentPerSession = Math.round(diff / sessionsToAdjust);
     
-  } else {
-    // Gradient week: progressive within week
-    const session1 = weekTarget;
-    const session2 = weekTarget + Math.round(withinWeekIncrement * 0.5);
-    const session3 = weekTarget + withinWeekIncrement;
-    
-    // Enforce 3g minimum between sessions (or make them equal)
-    let finalSession2 = session2;
-    let finalSession3 = session3;
-    
-    if (session2 - session1 < MIN_INCREMENT) {
-      finalSession2 = session1;
+    for (let i = totalSessions - sessionsToAdjust; i < totalSessions; i++) {
+      if (i >= 0) {
+        allSessionDosages[i] = Math.min(
+          allSessionDosages[i] + adjustmentPerSession,
+          targetIntake
+        );
+      }
     }
-    if (finalSession3 - finalSession2 < MIN_INCREMENT) {
-      finalSession3 = finalSession2;
-    }
-    
-    // Cap at target
-    finalSession2 = Math.min(finalSession2, targetIntake);
-    finalSession3 = Math.min(finalSession3, targetIntake);
-    
-    return {
-      session1: session1,
-      session2: finalSession2,
-      session3: finalSession3
-    };
+    allSessionDosages[finalSessionIndex] = targetIntake;
   }
+  
+  // Get sessions for this week
+  const session1Index = weekIndex * SESSIONS_PER_WEEK;
+  const session2Index = weekIndex * SESSIONS_PER_WEEK + 1;
+  const session3Index = weekIndex * SESSIONS_PER_WEEK + 2;
+  
+  return {
+    session1: allSessionDosages[session1Index] || currentIntake,
+    session2: allSessionDosages[session2Index] || currentIntake,
+    session3: allSessionDosages[session3Index] || targetIntake
+  };
 }
 
 /**

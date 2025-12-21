@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useMemo } from 'react';
 import { useApp } from '@/lib/store';
 import { getIntakeMidpoint, getProductEquivalent, calculateWeekSessions } from '@/lib/calculations';
 import { isShortDistanceEvent, sportDisplayNames, eventDisplayNames } from '@/lib/types';
@@ -28,6 +29,21 @@ export default function ProtocolResultsScreen() {
   // Get carbGap from calculation result
   const carbGap = calcResult?.carbGap || 0;
 
+  // Pre-calculate all session data for PDF
+  const sessionsData = useMemo(() => {
+    if (!protocol) return [];
+    const weeklyTargets = protocol.weeklyTargets || [];
+    return Array.from({ length: protocol.totalWeeks }, (_, weekIndex) => {
+      return calculateWeekSessions(
+        weekIndex + 1,
+        weeklyTargets,
+        protocol.totalWeeks,
+        currentIntake,
+        targetIntake
+      );
+    });
+  }, [protocol, currentIntake, targetIntake]);
+
   if (!protocol) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -37,81 +53,36 @@ export default function ProtocolResultsScreen() {
   }
 
   const handlePrint = async () => {
-    // Dynamically import html2pdf only on client side
-    const html2pdf = (await import('html2pdf.js')).default;
-    
-    // Get the content element to capture
-    const element = document.getElementById('protocol-content');
-    if (!element) return;
+    // Dynamically import React-PDF (client-side only)
+    const { pdf } = await import('@react-pdf/renderer');
+    const { default: ProtocolPdfDocument } = await import('@/components/ProtocolPdfDocument');
 
-    // Hide elements that shouldn't be in PDF
-    const elementsToHide = document.querySelectorAll('[data-pdf-exclude]');
-    const originalDisplays: (string | null)[] = [];
-    elementsToHide.forEach((el) => {
-      const htmlEl = el as HTMLElement;
-      originalDisplays.push(htmlEl.style.display);
-      htmlEl.style.display = 'none';
-    });
+    // Generate PDF blob
+    const blob = await pdf(
+      <ProtocolPdfDocument
+        protocol={protocol}
+        currentIntake={currentIntake}
+        targetIntake={targetIntake}
+        sport={state.sport}
+        event={state.event}
+        finishTimeMinutes={state.finishTimeMinutes}
+        giFrequency={state.giFrequency}
+        gender={state.gender}
+        frequency={state.frequency || 2}
+        sessions={sessionsData}
+        weeklyTargets={protocol.weeklyTargets || []}
+      />
+    ).toBlob();
 
-    // Add readable URL to product tile button (temporarily)
-    const productButton = document.querySelector('[data-product-tile-button]');
-    let urlTextAdded = false;
-    if (productButton) {
-      const existingUrlText = productButton.parentElement?.querySelector('.pdf-url-text');
-      if (!existingUrlText) {
-        const urlText = document.createElement('div');
-        urlText.className = 'pdf-url-text text-white/90 text-xs mt-2';
-        urlText.textContent = 'www.get-better.co/pure-carb';
-        urlText.style.fontSize = '10pt';
-        urlText.style.marginTop = '8px';
-        productButton.parentElement?.appendChild(urlText);
-        urlTextAdded = true;
-      }
-    }
-
-    // Configure PDF options
-    const opt = {
-      margin: [15, 15, 15, 15] as [number, number, number, number], // 15mm margins
-      filename: `gut-training-protokoll-${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { 
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        ignoreElements: (element: Element) => {
-          // Ignore elements with data-pdf-exclude
-          return element.hasAttribute('data-pdf-exclude');
-        }
-      },
-      jsPDF: { 
-        unit: 'mm', 
-        format: [148, 0] as [number, number], // A5 width (148mm), height auto
-        orientation: 'portrait' as const
-      },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-
-    try {
-      // Generate and download PDF
-      await html2pdf().set(opt).from(element).save();
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    } finally {
-      // Restore hidden elements
-      elementsToHide.forEach((el, index) => {
-        const htmlEl = el as HTMLElement;
-        htmlEl.style.display = originalDisplays[index] || '';
-      });
-
-      // Remove added URL text
-      if (urlTextAdded && productButton) {
-        const urlText = productButton.parentElement?.querySelector('.pdf-url-text');
-        if (urlText) {
-          urlText.remove();
-        }
-      }
-    }
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `gut-training-protokoll-${new Date().toISOString().split('T')[0]}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleShare = async () => {

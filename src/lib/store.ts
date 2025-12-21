@@ -30,6 +30,7 @@ export interface AppState {
   
   // Protocol setup
   frequency?: 1 | 2 | 3;
+  selectedTimeline?: TimelineChoice;
   
   // Results
   calculationResult?: CalculationResult;
