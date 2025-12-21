@@ -409,15 +409,12 @@ export default function ProtocolResultsScreen() {
                             <div className="p-3 bg-white rounded-lg border border-black/5">
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Standard-Einheit</span>
-              </div>
-                                  <p className="text-sm text-black/60 mb-1">
-                                    Lange Einheit über 2 Stunden – Bereitet den Darm vor
-                                  </p>
-                                  <p className="text-xs text-black/50 font-medium">
-                                    Moderate Intensität (Zone 2, Aerobe Zone)
-                                  </p>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Session 1</span>
+                                    </div>
+                                    <p className="text-sm text-black/60 mb-1">
+                                      Lange Einheit über 2 Stunden
+                                    </p>
               </div>
                                 <div className="flex-shrink-0 text-right">
                                   <p className="text-lg font-semibold text-black">
@@ -433,14 +430,10 @@ export default function ProtocolResultsScreen() {
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Test-Einheit</span>
-                                  <span className="text-xs text-black/50">(zum Ende der Woche)</span>
+                                  <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Session {numStandardSessions + 1}</span>
                                 </div>
                                 <p className="text-sm text-black/60 mb-1">
-                                  Lange Einheit ({guidance.session}) – Entscheidungsmoment: Bei erfolgreicher Toleranz Freigabe für nächste Woche
-                                </p>
-                                <p className="text-xs text-black/50 font-medium">
-                                  Wettkampfintensität (Race Pace, Zone 3-4)
+                                  Lange Einheit ({guidance.session})
                                 </p>
                               </div>
                               <div className="flex-shrink-0 text-right">
@@ -458,23 +451,11 @@ export default function ProtocolResultsScreen() {
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Lange Einheit</span>
-                                  {state.frequency && state.frequency >= 3 && idx === 0 && (
-                                    <span className="text-xs text-black/50">(z.B. Montag)</span>
-                                  )}
-                                  {state.frequency && state.frequency >= 3 && idx === 1 && (
-                                    <span className="text-xs text-black/50">(z.B. Mittwoch)</span>
-                                  )}
-                                  {state.frequency && state.frequency >= 3 && idx === 2 && (
-                                    <span className="text-xs text-black/50">(z.B. Freitag)</span>
-                                  )}
+                                  <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Session {idx + 1}</span>
                                 </div>
                                 <p className="text-sm text-black/60 mb-1">
-                                  Alle Einheiten verwenden die gleiche progressive Dosierung
+                                  Lange Einheit über 2 Stunden
                                 </p>
-                                <p className="text-xs text-black/50 font-medium">
-                                  Moderate bis Wettkampfintensität (Zone 2-3)
-                </p>
               </div>
                               <div className="flex-shrink-0 text-right">
                                 <p className="text-lg font-semibold text-black">
@@ -578,15 +559,9 @@ export default function ProtocolResultsScreen() {
             </svg>
             Protokoll downloaden
           </button>
-          <a
-            href="/"
-            className="block w-full btn-primary text-center"
-          >
-            Neue Berechnung starten
-          </a>
           <button
             onClick={handleShare}
-            className="w-full flex items-center justify-center gap-2 px-6 py-4 border border-black/10 hover:border-black/30 bg-white text-black rounded-full transition-colors font-medium"
+            className="w-full btn-secondary text-center flex items-center justify-center gap-2"
             aria-label="Tool teilen"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -594,6 +569,14 @@ export default function ProtocolResultsScreen() {
             </svg>
             Tool Teilen
           </button>
+          <div className="pt-12">
+          <a
+            href="/"
+              className="text-black/70 hover:text-black transition-colors text-center block"
+          >
+            Neue Berechnung starten
+          </a>
+          </div>
         </div>
       </footer>
     </div>
