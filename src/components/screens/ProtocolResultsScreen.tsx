@@ -446,6 +446,32 @@ export default function ProtocolResultsScreen() {
         </div>
       </section>
 
+      {/* Pure Carb Promotion */}
+      <section className="px-6 pt-12 pb-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-gradient-to-br from-black to-black/90 rounded-2xl p-6 md:p-8 text-white overflow-hidden relative">
+            <div className="relative z-10">
+              <h3 className="text-xl md:text-2xl font-medium mb-2">Pure Carb – Deine optimale Energiequelle</h3>
+              <p className="text-white/80 text-sm md:text-base mb-4">
+                Ein geschmacksneutral süßer Drink-Mix mit Bio-Malto und Fruktose im optimalen 2:1-Verhältnis. 
+                Maximal magenfreundlich und von 30–120g/h dosierbar – perfekt für dein Gut-Training.
+              </p>
+              <a
+                href="https://get-better.co/pure-carb"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full hover:bg-white/90 transition-colors font-medium text-sm"
+              >
+                Pure Carb entdecken
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer - CTA */}
       <footer className="px-6 pt-12 pb-24 border-t border-black/5">
         <div className="max-w-3xl mx-auto space-y-4">
