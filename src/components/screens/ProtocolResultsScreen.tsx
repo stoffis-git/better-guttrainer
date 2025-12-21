@@ -36,8 +36,78 @@ export default function ProtocolResultsScreen() {
     );
   }
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    // Dynamically import html2pdf only on client side
+    const html2pdf = (await import('html2pdf.js')).default;
+    
+    // Get the content element to capture
+    const element = document.getElementById('protocol-content');
+    if (!element) return;
+
+    // Hide elements that shouldn't be in PDF
+    const elementsToHide = document.querySelectorAll('[data-pdf-exclude]');
+    const originalDisplays: (string | null)[] = [];
+    elementsToHide.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      originalDisplays.push(htmlEl.style.display);
+      htmlEl.style.display = 'none';
+    });
+
+    // Add readable URL to product tile button (temporarily)
+    const productButton = document.querySelector('[data-product-tile-button]');
+    let urlTextAdded = false;
+    if (productButton) {
+      const existingUrlText = productButton.parentElement?.querySelector('.pdf-url-text');
+      if (!existingUrlText) {
+        const urlText = document.createElement('div');
+        urlText.className = 'pdf-url-text text-white/90 text-xs mt-2';
+        urlText.textContent = 'www.get-better.co/pure-carb';
+        urlText.style.fontSize = '10pt';
+        urlText.style.marginTop = '8px';
+        productButton.parentElement?.appendChild(urlText);
+        urlTextAdded = true;
+      }
+    }
+
+    // Configure PDF options
+    const opt = {
+      margin: [15, 15, 15, 15] as [number, number, number, number], // 15mm margins
+      filename: `gut-training-protokoll-${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: [148, 0] as [number, number], // A5 width (148mm), height auto
+        orientation: 'portrait' as const
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    try {
+      // Generate and download PDF
+      await html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      // Restore hidden elements
+      elementsToHide.forEach((el, index) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.display = originalDisplays[index] || '';
+      });
+
+      // Remove added URL text
+      if (urlTextAdded && productButton) {
+        const urlText = productButton.parentElement?.querySelector('.pdf-url-text');
+        if (urlText) {
+          urlText.remove();
+        }
+      }
+    }
   };
 
   const handleShare = async () => {
@@ -139,7 +209,7 @@ export default function ProtocolResultsScreen() {
   return (
     <div className="min-h-screen bg-white text-black">
       {/* Header */}
-      <header className="px-6 pt-6 pb-4">
+      <header className="px-6 pt-6 pb-4" data-pdf-exclude>
         <div className="max-w-3xl mx-auto flex justify-between items-center">
           <a
             href="/protocol-setup"
@@ -162,6 +232,8 @@ export default function ProtocolResultsScreen() {
         </div>
       </header>
 
+      {/* Content wrapper for PDF */}
+      <div id="protocol-content">
       {/* Hero */}
       <section className="px-6 py-12 border-b border-black/5">
         <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -469,11 +541,13 @@ export default function ProtocolResultsScreen() {
                 Geschmacksneutral und maximal magenfreundlich.
                 Von 30–120g/h dosierbar – perfekt für dein Gut-Training.
               </p>
+              <div>
               <a
                 href="https://get-better.co/pure-carb"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full hover:bg-white/90 transition-colors font-medium text-sm w-fit"
+                data-product-tile-button
               >
                 <span className="md:inline hidden">Pure Carb entdecken</span>
                 <span className="md:hidden">Entdecken</span>
@@ -481,13 +555,15 @@ export default function ProtocolResultsScreen() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
+              </div>
             </div>
           </div>
         </div>
       </section>
+      </div>
 
       {/* Footer - CTA */}
-      <footer className="px-6 pt-12 pb-24 border-t border-black/5">
+      <footer className="px-6 pt-12 pb-24 border-t border-black/5" data-pdf-exclude>
         <div className="max-w-3xl mx-auto space-y-4">
           <button
             onClick={handlePrint}
