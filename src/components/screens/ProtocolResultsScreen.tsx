@@ -69,42 +69,72 @@ export default function ProtocolResultsScreen() {
       }
     }
 
-    // Helper function to convert colors in cloned DOM by reading from original
-    const convertColorsInClone = (clonedElement: HTMLElement, originalElement: HTMLElement) => {
-      const clonedElements = clonedElement.querySelectorAll('*');
-      const originalElements = originalElement.querySelectorAll('*');
+    // Convert all colors to explicit RGB/hex values before PDF generation
+    // This prevents html2canvas from trying to parse oklab() color functions
+    const allElements = element.querySelectorAll('*');
+    const originalStyles: Array<{
+      element: HTMLElement;
+      backgroundColor: string;
+      color: string;
+      borderColor: string;
+    }> = [];
+
+    allElements.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      const computedStyle = window.getComputedStyle(htmlEl);
       
-      clonedElements.forEach((clonedEl, index) => {
-        if (index < originalElements.length) {
-          const originalEl = originalElements[index] as HTMLElement;
-          const htmlEl = clonedEl as HTMLElement;
-          
-          try {
-            const computedStyle = window.getComputedStyle(originalEl);
-            
-            // Convert background-color
-            const bgColor = computedStyle.backgroundColor;
-            if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-              htmlEl.style.backgroundColor = bgColor;
-            }
-            
-            // Convert color
-            const textColor = computedStyle.color;
-            if (textColor) {
-              htmlEl.style.color = textColor;
-            }
-            
-            // Convert border-color
-            const borderColor = computedStyle.borderColor;
-            if (borderColor && borderColor !== 'rgba(0, 0, 0, 0)') {
-              htmlEl.style.borderColor = borderColor;
-            }
-          } catch (e) {
-            // Ignore errors
-          }
-        }
+      // Store original inline styles
+      const originalBg = htmlEl.style.backgroundColor;
+      const originalColor = htmlEl.style.color;
+      const originalBorder = htmlEl.style.borderColor;
+      
+      originalStyles.push({
+        element: htmlEl,
+        backgroundColor: originalBg,
+        color: originalColor,
+        borderColor: originalBorder
       });
-    };
+
+      // Set explicit RGB values from computed styles
+      try {
+        const bgColor = computedStyle.backgroundColor;
+        if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+          htmlEl.style.backgroundColor = bgColor;
+        } else if (bgColor === 'rgba(0, 0, 0, 0)' || bgColor === 'transparent') {
+          htmlEl.style.backgroundColor = 'transparent';
+        }
+      } catch (e) {
+        // If error, set to white as fallback
+        htmlEl.style.backgroundColor = '#ffffff';
+      }
+
+      try {
+        const textColor = computedStyle.color;
+        if (textColor) {
+          htmlEl.style.color = textColor;
+        }
+      } catch (e) {
+        htmlEl.style.color = '#000000';
+      }
+
+      try {
+        const borderColor = computedStyle.borderColor;
+        if (borderColor && borderColor !== 'rgba(0, 0, 0, 0)') {
+          htmlEl.style.borderColor = borderColor;
+        }
+      } catch (e) {
+        // Ignore border color errors
+      }
+    });
+
+    // Also set background color on the main element
+    const elementBg = window.getComputedStyle(element).backgroundColor;
+    const originalElementBg = (element as HTMLElement).style.backgroundColor;
+    if (elementBg && elementBg !== 'rgba(0, 0, 0, 0)' && elementBg !== 'transparent') {
+      (element as HTMLElement).style.backgroundColor = elementBg;
+    } else {
+      (element as HTMLElement).style.backgroundColor = '#ffffff';
+    }
 
     // Configure PDF options
     const opt = {
@@ -119,13 +149,6 @@ export default function ProtocolResultsScreen() {
         ignoreElements: (element: Element) => {
           // Ignore elements with data-pdf-exclude
           return element.hasAttribute('data-pdf-exclude');
-        },
-        onclone: (clonedDoc: Document) => {
-          // Convert colors in cloned document to RGB format
-          const clonedElement = clonedDoc.getElementById('protocol-content');
-          if (clonedElement && element) {
-            convertColorsInClone(clonedElement as HTMLElement, element as HTMLElement);
-          }
         }
       },
       jsPDF: { 
@@ -142,6 +165,16 @@ export default function ProtocolResultsScreen() {
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {
+      // Restore original styles
+      originalStyles.forEach(({ element, backgroundColor, color, borderColor }) => {
+        element.style.backgroundColor = backgroundColor;
+        element.style.color = color;
+        element.style.borderColor = borderColor;
+      });
+
+      // Restore main element background
+      (element as HTMLElement).style.backgroundColor = originalElementBg;
+
       // Restore hidden elements
       elementsToHide.forEach((el, index) => {
         const htmlEl = el as HTMLElement;
