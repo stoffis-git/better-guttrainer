@@ -139,15 +139,26 @@ export default function ProtocolResultsScreen() {
     <div className="min-h-screen bg-white text-black">
       {/* Header */}
       <header className="px-6 pt-6 pb-4">
-        <a
-          href="/protocol-setup"
-          className="flex items-center gap-2 text-sm md:text-base text-black/70 hover:text-black transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Zurück zum Ergebnis
-        </a>
+        <div className="max-w-3xl mx-auto flex justify-between items-center">
+          <a
+            href="/protocol-setup"
+            className="flex items-center gap-2 text-sm md:text-base text-black/70 hover:text-black transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Zurück zum Ergebnis
+          </a>
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-black/80 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Protokoll downloaden
+          </button>
+        </div>
       </header>
 
       {/* Hero */}
