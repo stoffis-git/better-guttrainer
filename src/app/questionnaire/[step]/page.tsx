@@ -330,6 +330,11 @@ function Question3Time() {
     }
   }, []);
 
+  // Auto-select text on focus for easy replacement
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
+  };
+
   return (
     <div className="space-y-8 md:space-y-8">
       <div className="text-center hidden md:block">
@@ -344,11 +349,21 @@ function Question3Time() {
           <label className="block text-xs text-black/60 uppercase tracking-wide mb-2">Stunden</label>
           <input
             type="number"
+            inputMode="numeric"
             min={1}
             max={33}
+            step={1}
             value={hours}
-            onChange={(e) => updateTime(Math.max(1, Math.min(33, parseInt(e.target.value) || 1)), minutes)}
-            className="w-24 text-center text-2xl font-medium"
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '' || val === '-') return; // Allow empty during typing
+              const num = parseInt(val, 10);
+              if (!isNaN(num)) {
+                updateTime(Math.max(1, Math.min(33, num)), minutes);
+              }
+            }}
+            onFocus={handleFocus}
+            className="w-24 text-center text-2xl font-medium border border-black/20 rounded-lg px-3 py-2 focus:border-black focus:outline-none number-input-clean"
           />
         </div>
         <span className="text-3xl text-black/30 mt-6">:</span>
@@ -356,11 +371,21 @@ function Question3Time() {
           <label className="block text-xs text-black/60 uppercase tracking-wide mb-2">Minuten</label>
           <input
             type="number"
+            inputMode="numeric"
             min={0}
             max={59}
-            value={minutes.toString().padStart(2, '0')}
-            onChange={(e) => updateTime(hours, Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-            className="w-24 text-center text-2xl font-medium"
+            step={1}
+            value={minutes}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === '' || val === '-') return; // Allow empty during typing
+              const num = parseInt(val, 10);
+              if (!isNaN(num)) {
+                updateTime(hours, Math.max(0, Math.min(59, num)));
+              }
+            }}
+            onFocus={handleFocus}
+            className="w-24 text-center text-2xl font-medium border border-black/20 rounded-lg px-3 py-2 focus:border-black focus:outline-none number-input-clean"
           />
         </div>
       </div>

@@ -177,6 +177,25 @@ select:focus {
   outline: none;
 }
 
+/* Number input improvements for mobile UX */
+.number-input-clean {
+  /* Hide spinners on Chrome, Safari, Edge */
+  -moz-appearance: textfield;
+}
+
+.number-input-clean::-webkit-outer-spin-button,
+.number-input-clean::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Better mobile number input styling */
+input[type="number"][inputmode="numeric"] {
+  /* Ensure numeric keypad on mobile */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 /* Badge/Pill styles */
 .badge {
   display: inline-flex;
