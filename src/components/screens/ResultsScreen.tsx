@@ -233,7 +233,7 @@ export default function ResultsScreen() {
             href="/protocol-setup"
                 className="btn-primary bg-black text-white hover:bg-black hover:text-white px-12 py-4 text-lg md:text-xl inline-block"
           >
-                Mein {nextStep}g/h-Protokoll downloaden
+                Mein {nextStep} g/h-Protokoll downloaden
           </a>
             </div>
           </div>

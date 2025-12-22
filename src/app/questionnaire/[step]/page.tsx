@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/lib/store';
 import { eventDisplayNames, isShortDistanceEvent } from '@/lib/types';
 import type { Sport, EventType, GIFrequency, Gender } from '@/lib/types';
@@ -316,11 +316,40 @@ function Question3Time() {
   const { state, setAnswer } = useApp();
   const [hours, setHours] = useState(state.finishTimeMinutes ? Math.floor(state.finishTimeMinutes / 60) : 5);
   const [minutes, setMinutes] = useState(state.finishTimeMinutes ? Math.floor(state.finishTimeMinutes % 60) : 0);
+  const [minutesInputValue, setMinutesInputValue] = useState<string>('');
+  const [isMinutesFocused, setIsMinutesFocused] = useState(false);
+  const hoursInputRef = useRef<HTMLInputElement>(null);
+  const minutesInputRef = useRef<HTMLInputElement>(null);
+  const [warnings, setWarnings] = useState<{ hours?: string }>({});
 
-  const updateTime = (h: number, m: number) => {
-    const totalMinutes = h * 60 + m;
-    setHours(h);
-    setMinutes(m);
+  const updateTime = (h: number, m: number, skipValidation = false) => {
+    let finalHours = h;
+    let finalMinutes = m;
+    const newWarnings: { hours?: string } = {};
+
+    // Smart validation: if minutes > 59, auto-correct
+    if (m > 59 && !skipValidation) {
+      const extraHours = Math.floor(m / 60);
+      finalHours = Math.min(24, h + extraHours);
+      finalMinutes = m % 60;
+    }
+
+    // Clamp values
+    finalHours = Math.max(1, Math.min(24, finalHours));
+    finalMinutes = Math.max(0, Math.min(59, finalMinutes));
+
+    // Optional warnings
+    if (finalHours < 2) {
+      newWarnings.hours = 'Für dieses Tool zu schnell';
+    } else if (finalHours > 15) {
+      newWarnings.hours = 'Bist du sicher?';
+    }
+
+    setWarnings(newWarnings);
+
+    const totalMinutes = finalHours * 60 + finalMinutes;
+    setHours(finalHours);
+    setMinutes(finalMinutes);
     setAnswer('finishTimeMinutes', totalMinutes);
   };
 
@@ -328,11 +357,68 @@ function Question3Time() {
     if (state.finishTimeMinutes === undefined) {
       setAnswer('finishTimeMinutes', hours * 60 + minutes);
     }
-  }, []);
+    // Initialize minutes input value
+    if (!isMinutesFocused) {
+      setMinutesInputValue(minutes.toString().padStart(2, '0'));
+    }
+  }, [minutes, isMinutesFocused]);
 
   // Auto-select text on focus for easy replacement
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     e.target.select();
+  };
+
+  // Format minutes on blur (pad single digit)
+  const handleMinutesBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setIsMinutesFocused(false);
+    const val = e.target.value;
+    if (val === '' || val === '-') {
+      updateTime(hours, 0);
+      setMinutesInputValue('00');
+      return;
+    }
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      const clamped = Math.max(0, Math.min(59, num));
+      updateTime(hours, clamped);
+      setMinutesInputValue(clamped.toString().padStart(2, '0'));
+    }
+  };
+
+  // Auto-tab from hours to minutes when 2 digits entered (if hours > 9)
+  const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val === '' || val === '-') return; // Allow empty during typing
+    
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      const clamped = Math.max(1, Math.min(24, num));
+      updateTime(clamped, minutes, true);
+      
+      // Auto-tab: if hours >= 10 (2 digits), move to minutes
+      if (clamped >= 10 && minutesInputRef.current) {
+        setTimeout(() => minutesInputRef.current?.focus(), 50);
+      }
+    }
+  };
+
+  // Handle minutes input with smart validation
+  const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    // Allow empty during typing - show raw value
+    setMinutesInputValue(val);
+    
+    if (val === '' || val === '-') return;
+    
+    const num = parseInt(val, 10);
+    if (!isNaN(num)) {
+      updateTime(hours, num, true);
+    }
+  };
+
+  const handleMinutesFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    setIsMinutesFocused(true);
+    handleFocus(e);
   };
 
   return (
@@ -346,52 +432,48 @@ function Question3Time() {
 
       <div className="flex items-center justify-center gap-4">
         <div className="text-center">
-          <label className="block text-xs text-black/60 uppercase tracking-wide mb-2">Stunden</label>
+          <label className="block text-xs text-black/60 uppercase tracking-wide mb-2">H</label>
           <input
+            ref={hoursInputRef}
             type="number"
             inputMode="numeric"
+            pattern="[0-9]*"
             min={1}
-            max={33}
+            max={24}
             step={1}
+            placeholder="5"
             value={hours}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === '' || val === '-') return; // Allow empty during typing
-              const num = parseInt(val, 10);
-              if (!isNaN(num)) {
-                updateTime(Math.max(1, Math.min(33, num)), minutes);
-              }
-            }}
+            onChange={handleHoursChange}
             onFocus={handleFocus}
             className="w-24 text-center text-2xl font-medium border border-black/20 rounded-lg px-3 py-2 focus:border-black focus:outline-none number-input-clean"
           />
+          {warnings.hours && (
+            <p className="text-xs text-black/50 mt-1">{warnings.hours}</p>
+          )}
         </div>
         <span className="text-3xl text-black/30 mt-6">:</span>
         <div className="text-center">
-          <label className="block text-xs text-black/60 uppercase tracking-wide mb-2">Minuten</label>
+          <label className="block text-xs text-black/60 uppercase tracking-wide mb-2">MIN</label>
           <input
+            ref={minutesInputRef}
             type="number"
             inputMode="numeric"
+            pattern="[0-9]*"
             min={0}
             max={59}
             step={1}
-            value={minutes}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === '' || val === '-') return; // Allow empty during typing
-              const num = parseInt(val, 10);
-              if (!isNaN(num)) {
-                updateTime(hours, Math.max(0, Math.min(59, num)));
-              }
-            }}
-            onFocus={handleFocus}
+            placeholder="00"
+            value={isMinutesFocused ? minutesInputValue : minutes.toString().padStart(2, '0')}
+            onChange={handleMinutesChange}
+            onFocus={handleMinutesFocus}
+            onBlur={handleMinutesBlur}
             className="w-24 text-center text-2xl font-medium border border-black/20 rounded-lg px-3 py-2 focus:border-black focus:outline-none number-input-clean"
           />
         </div>
       </div>
 
       <p className="text-center text-sm text-black/60">
-        Gesamt: {hours}h {minutes}min ({hours * 60 + minutes} Minuten)
+        Gesamt: {hours}h {minutes.toString().padStart(2, '0')}min ({hours * 60 + minutes} Minuten)
       </p>
     </div>
   );
