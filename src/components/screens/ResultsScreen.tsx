@@ -231,9 +231,9 @@ export default function ResultsScreen() {
             <div className="flex justify-center">
           <a
             href="/protocol-setup"
-                className="btn-primary bg-black text-white hover:bg-black hover:text-white px-12 py-4 text-lg md:text-xl inline-block"
+                className="bg-black text-white px-12 py-4 text-lg md:text-xl rounded-full hover:bg-black/80 transition-colors inline-block font-medium"
           >
-                Mein {nextStep} g/h-Protokoll downloaden
+                Mein {nextStep} g/h-Protokoll erhalten
           </a>
             </div>
           </div>
