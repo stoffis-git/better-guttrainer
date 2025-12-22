@@ -263,17 +263,10 @@ export default function ProtocolResultsScreen() {
           <div className="space-y-6">
             <div>
               <h2 className="text-label text-black/70">Progressionsplan</h2>
-              {protocol.weeklyIncrease >= 2.0 ? (
-                <p className="text-sm text-black/60 mt-2">
-                  Pro Woche: <strong>{state.frequency || 2} lange Einheit{state.frequency !== 1 ? 'en' : ''}</strong> über 2 Stunden. 
-                  Eine Test-Einheit (zum Ende der Woche) testet die neue Stufe, die anderen bereiten vor.
-                </p>
-              ) : (
-                <p className="text-sm text-black/60 mt-2">
-                  Pro Woche: <strong>{state.frequency || 2} lange Einheit{state.frequency !== 1 ? 'en' : ''}</strong> über 2 Stunden. 
-                  Bei kleinen wöchentlichen Steigerungen verwenden alle Einheiten die gleiche progressive Dosierung.
-                </p>
-              )}
+              <p className="text-sm text-black/60 mt-2">
+                Pro Woche: <strong>2 Einheiten à 2 Stunden</strong> + <strong>1 lange Einheit (3–4h)</strong>. 
+                Die Dosierung steigt schrittweise über alle Einheiten.
+              </p>
             </div>
             
           <div className="space-y-4">
@@ -305,19 +298,9 @@ export default function ProtocolResultsScreen() {
                   targetIntake
                 );
                 
-                // Determine if this week has within-week progression (gradient)
-                const weekTarget = weeklyTargets[weekIndex] || currentIntake;
-                const previousWeekTarget = weekIndex > 0 ? weeklyTargets[weekIndex - 1] : currentIntake;
-                const weeklyJump = weekTarget - previousWeekTarget;
-                const hasGradient = (weeklyJump >= 6 && week !== protocol.totalWeeks);
-                
-                // For backwards compatibility: Check if we should show "test session" style
-                // (only for large weekly increases, similar to old hasKeySession logic)
-                const weeklyIncrease = protocol.weeklyIncrease;
-                const showTestSessionStyle = weeklyIncrease >= 2.0 && hasGradient;
-                
-                // Anzahl der Standard-Einheiten
-                const numStandardSessions = showTestSessionStyle ? (state.frequency || 2) - 1 : (state.frequency || 2);
+                // Determine if Session 3 should be long (always after Week 1)
+                const isLongSession = week > 1;
+                const frequency = state.frequency || 3;
                 
                 return (
                   <div key={week} className="bg-white rounded-xl border border-black/10 overflow-hidden">
@@ -326,117 +309,80 @@ export default function ProtocolResultsScreen() {
                       <div className="flex items-center gap-3">
                         <h3 className="font-medium text-black">Woche {week}</h3>
                         <span className="text-xs px-2 py-1 bg-black/10 rounded text-black/70">{phase.phaseName}</span>
-            </div>
-          </div>
+                      </div>
+                    </div>
 
                     {/* Sessions */}
                     <div className="p-4 space-y-3">
-                      {showTestSessionStyle ? (
-                        <>
-                          {/* Standard-Einheiten zuerst (bei großen Steigerungen) */}
-                          {/* Bei 3+ Einheiten: Jede Standard-Einheit separat auflisten */}
-                          {numStandardSessions > 0 && (state.frequency && state.frequency >= 3 ? (
-                            // 3+ Einheiten: Standard-Einheiten separat auflisten
-                            Array.from({ length: numStandardSessions }, (_, idx) => {
-                              // For gradient weeks, show progressive dosages
-                              let sessionDosage = sessions.session1;
-                              if (hasGradient) {
-                                if (idx === 0) sessionDosage = sessions.session1;
-                                else if (idx === 1) sessionDosage = sessions.session2;
-                                else sessionDosage = sessions.session2; // Use session2 for additional sessions
-                              }
-                              
-                              return (
-                                <div key={idx} className="p-3 bg-white rounded-lg border border-black/5">
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div className="flex-1">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Standard-Einheit</span>
-                                        {state.frequency && state.frequency >= 3 && idx === 0 && (
-                                          <span className="text-xs text-black/50">(z.B. Montag)</span>
-                                        )}
-                                        {state.frequency && state.frequency >= 3 && idx === 1 && (
-                                          <span className="text-xs text-black/50">(z.B. Mittwoch)</span>
-                                        )}
-                                      </div>
-                                      <p className="text-sm text-black/60 mb-1">
-                                        Lange Einheit über 2 Stunden – Bereitet den Darm vor
-                                      </p>
-                                      <p className="text-xs text-black/50 font-medium">
-                                        Moderate Intensität (Zone 2, Aerobe Zone)
-                                      </p>
-                                    </div>
-                                    <div className="flex-shrink-0 text-right">
-                                      <p className="text-lg font-semibold text-black">
-                                        {sessionDosage}g/h
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          ) : (
-                            // 2 Einheiten: Eine Standard-Einheit
-                            <div className="p-3 bg-white rounded-lg border border-black/5">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Session 1</span>
-                                    </div>
-                                    <p className="text-sm text-black/60 mb-1">
-                                      Lange Einheit über 2 Stunden
-                                    </p>
-              </div>
-                                <div className="flex-shrink-0 text-right">
-                                  <p className="text-lg font-semibold text-black">
-                                    {hasGradient ? sessions.session1 : sessions.session1}g/h
-                                  </p>
-              </div>
-            </div>
-          </div>
-                          ))}
-                          
-                          {/* Test-Einheit zuletzt (bei großen Steigerungen) */}
-                          <div className="p-3 bg-black/3 rounded-lg border border-black/10">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Session {numStandardSessions + 1}</span>
-                                </div>
-                                <p className="text-sm text-black/60 mb-1">
-                                  Lange Einheit ({guidance.session})
-                                </p>
-                              </div>
-                              <div className="flex-shrink-0 text-right">
-                                <p className="text-lg font-semibold text-black">
-                                  {hasGradient ? sessions.session3 : sessions.session1}g/h
-                </p>
-              </div>
+                      {/* Session 1 */}
+                      <div className="p-3 bg-white rounded-lg border border-black/5">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Session 1</span>
+                              {frequency >= 3 && (
+                                <span className="text-xs text-black/50">(z.B. Montag)</span>
+                              )}
                             </div>
+                            <p className="text-sm text-black/60 mb-1">
+                              Lange Einheit über 2 Stunden
+                            </p>
                           </div>
-                        </>
-                      ) : (
-                        /* Kleine Steigerung: Alle Einheiten gleich */
-                        Array.from({ length: numStandardSessions }, (_, idx) => (
-                          <div key={idx} className="p-3 bg-white rounded-lg border border-black/5">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Session {idx + 1}</span>
-                                </div>
-                                <p className="text-sm text-black/60 mb-1">
-                                  Lange Einheit über 2 Stunden
-                                </p>
-              </div>
-                              <div className="flex-shrink-0 text-right">
-                                <p className="text-lg font-semibold text-black">
-                                  {sessions.session1}g/h
-                </p>
-              </div>
-            </div>
+                          <div className="flex-shrink-0 text-right">
+                            <p className="text-lg font-semibold text-black">
+                              {sessions.session1}g/h
+                            </p>
                           </div>
-                        ))
-                      )}
+                        </div>
+                      </div>
+
+                      {/* Session 2 */}
+                      <div className="p-3 bg-white rounded-lg border border-black/5">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Session 2</span>
+                              {frequency >= 3 && (
+                                <span className="text-xs text-black/50">(z.B. Mittwoch)</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-black/60 mb-1">
+                              Lange Einheit über 2 Stunden
+                            </p>
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            <p className="text-lg font-semibold text-black">
+                              {sessions.session2}g/h
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Session 3 - Long session after Week 1 */}
+                      <div className={`p-3 rounded-lg border ${isLongSession ? 'bg-black/3 border-black/10' : 'bg-white border-black/5'}`}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-medium text-black/70 uppercase tracking-wide">Session 3</span>
+                              {frequency >= 3 && (
+                                <span className="text-xs text-black/50">(z.B. Samstag)</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-black/60 mb-1">
+                              {isLongSession ? (
+                                <>Lange Einheit ({guidance.session})</>
+                              ) : (
+                                <>Lange Einheit über 2 Stunden</>
+                              )}
+                            </p>
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            <p className="text-lg font-semibold text-black">
+                              {sessions.session3}g/h
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
