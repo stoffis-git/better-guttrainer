@@ -313,27 +313,31 @@ export function calculateProtocol(
   const totalSessions = totalWeeks * SESSIONS_PER_WEEK;
   const MIN_SESSION_INCREMENT = 2; // Minimum 2g per session increment
   
-  // Calculate increment per session
-  let incrementPerSession = carbGap / totalSessions;
+  // Calculate how many 2g increments we can fit
+  const maxIncrements = Math.floor(carbGap / MIN_SESSION_INCREMENT);
+  // Note: remainder (< 2g) will be handled in final adjustment
   
-  // Round to nearest 1g, but enforce minimum of 2g
-  let sessionIncrement = Math.round(incrementPerSession);
-  if (sessionIncrement < MIN_SESSION_INCREMENT) {
-    sessionIncrement = MIN_SESSION_INCREMENT;
-  }
-  
-  // Build all session dosages
+  // Distribute increments evenly across all sessions
+  // Each increment adds 2g, so we need to space them out evenly
   const allSessionDosages: number[] = [];
-  let cumulativeIncrease = 0;
+  let currentDosage = currentIntake;
+  let incrementsUsed = 0;
   
   for (let i = 0; i < totalSessions; i++) {
-    const dosage = currentIntake + cumulativeIncrease;
-    allSessionDosages.push(Math.min(dosage, targetIntake));
+    // Calculate if this session should get an increment
+    // Distribute maxIncrements evenly across totalSessions
+    // Use floating point calculation to determine target increment index
+    const targetIncrementIndex = Math.floor((i + 1) * maxIncrements / totalSessions);
     
-    // Only increment if we haven't reached target yet
-    if (dosage < targetIntake) {
-      cumulativeIncrease += sessionIncrement;
+    if (targetIncrementIndex > incrementsUsed) {
+      // This session gets an increment
+      currentDosage += MIN_SESSION_INCREMENT;
+      incrementsUsed++;
     }
+    
+    // Cap at target (safety check)
+    currentDosage = Math.min(currentDosage, targetIntake);
+    allSessionDosages.push(currentDosage);
   }
   
   // Ensure final session hits exact target
@@ -341,19 +345,19 @@ export function calculateProtocol(
   const finalDosage = allSessionDosages[finalSessionIndex];
   if (finalDosage !== targetIntake) {
     const diff = targetIntake - finalDosage;
-    // Distribute the difference across the last few sessions
-    const sessionsToAdjust = Math.min(3, totalSessions); // Adjust last 3 sessions or all if fewer
-    const adjustmentPerSession = Math.round(diff / sessionsToAdjust);
     
-    for (let i = totalSessions - sessionsToAdjust; i < totalSessions; i++) {
-      if (i >= 0) {
-        allSessionDosages[i] = Math.min(
-          allSessionDosages[i] + adjustmentPerSession,
-          targetIntake
-        );
-      }
+    // Distribute the exact difference needed across sessions
+    // Work backwards from the final session to distribute remainder
+    let remainingDiff = diff;
+    for (let i = totalSessions - 1; i >= 0 && remainingDiff > 0; i--) {
+      const currentDosage = allSessionDosages[i];
+      const maxIncrease = targetIntake - currentDosage;
+      const increase = Math.min(remainingDiff, maxIncrease);
+      allSessionDosages[i] += increase;
+      remainingDiff -= increase;
     }
-    // Force final session to exact target
+    
+    // Force final session to exact target (safety check)
     allSessionDosages[finalSessionIndex] = targetIntake;
   }
   
@@ -429,24 +433,28 @@ export function calculateWeekSessions(
   const totalSessions = totalWeeks * SESSIONS_PER_WEEK;
   const MIN_SESSION_INCREMENT = 2;
   
-  // Calculate increment per session
-  let incrementPerSession = carbGap / totalSessions;
-  let sessionIncrement = Math.round(incrementPerSession);
-  if (sessionIncrement < MIN_SESSION_INCREMENT) {
-    sessionIncrement = MIN_SESSION_INCREMENT;
-  }
+  // Calculate how many 2g increments we can fit
+  const maxIncrements = Math.floor(carbGap / MIN_SESSION_INCREMENT);
+  // Note: remainder (< 2g) will be handled in final adjustment
   
-  // Calculate all session dosages
+  // Distribute increments evenly across all sessions
   const allSessionDosages: number[] = [];
-  let cumulativeIncrease = 0;
+  let currentDosage = currentIntake;
+  let incrementsUsed = 0;
   
   for (let i = 0; i < totalSessions; i++) {
-    const dosage = currentIntake + cumulativeIncrease;
-    allSessionDosages.push(Math.min(dosage, targetIntake));
+    // Calculate if this session should get an increment
+    const targetIncrementIndex = Math.floor((i + 1) * maxIncrements / totalSessions);
     
-    if (dosage < targetIntake) {
-      cumulativeIncrease += sessionIncrement;
+    if (targetIncrementIndex > incrementsUsed) {
+      // This session gets an increment
+      currentDosage += MIN_SESSION_INCREMENT;
+      incrementsUsed++;
     }
+    
+    // Cap at target (safety check)
+    currentDosage = Math.min(currentDosage, targetIntake);
+    allSessionDosages.push(currentDosage);
   }
   
   // Ensure final session hits exact target
@@ -454,17 +462,19 @@ export function calculateWeekSessions(
   const finalDosage = allSessionDosages[finalSessionIndex];
   if (finalDosage !== targetIntake) {
     const diff = targetIntake - finalDosage;
-    const sessionsToAdjust = Math.min(3, totalSessions);
-    const adjustmentPerSession = Math.round(diff / sessionsToAdjust);
     
-    for (let i = totalSessions - sessionsToAdjust; i < totalSessions; i++) {
-      if (i >= 0) {
-        allSessionDosages[i] = Math.min(
-          allSessionDosages[i] + adjustmentPerSession,
-          targetIntake
-        );
-      }
+    // Distribute the exact difference needed across sessions
+    // Work backwards from the final session
+    let remainingDiff = diff;
+    for (let i = totalSessions - 1; i >= 0 && remainingDiff > 0; i--) {
+      const currentDosage = allSessionDosages[i];
+      const maxIncrease = targetIntake - currentDosage;
+      const increase = Math.min(remainingDiff, maxIncrease);
+      allSessionDosages[i] += increase;
+      remainingDiff -= increase;
     }
+    
+    // Force final session to exact target (safety check)
     allSessionDosages[finalSessionIndex] = targetIntake;
   }
   
