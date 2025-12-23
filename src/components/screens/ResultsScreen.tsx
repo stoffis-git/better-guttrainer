@@ -353,11 +353,10 @@ export default function ResultsScreen() {
 
             {/* Max potential at 90g/h – nur anzeigen, wenn Hauptziel nicht 90 ist UND aktuelle Aufnahme <90g/h */}
             {nextStep !== 90 && currentIntakeNum < 90 && (
-              <p className="mt-10 md:mt-12 text-lg md:text-xl text-black font-medium">
-                Maximales Potenzial bei 90 g/h:{' '}
-                <span className="font-semibold">
-                  {maxPotential90.minutesLow}-{maxPotential90.minutesHigh} Minuten gesamt
-                </span>
+              <p className="mt-16 md:mt-20 text-lg md:text-xl text-black">
+                <span className="font-thin">Maximales Potenzial bei </span>
+                <span className="font-bold">90 g/h</span>
+                <span className="font-normal">: {maxPotential90.minutesLow}-{maxPotential90.minutesHigh} Minuten gesamt</span>
               </p>
             )}
           </div>
