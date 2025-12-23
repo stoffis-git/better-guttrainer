@@ -79,10 +79,22 @@ export default function ProtocolSetupScreen() {
     router.push('/protocol-results');
   };
 
+  // Calculate average increase per week dynamically based on carb gap
+  const calculateWeeklyRate = (weeks: number): string => {
+    if (!calcResult) return '~0g/Woche';
+    const weeklyRate = calcResult.carbGap / weeks;
+    // Round to 1 decimal place, but show as integer if it's a whole number
+    const rounded = Math.round(weeklyRate * 10) / 10;
+    if (rounded % 1 === 0) {
+      return `~${Math.round(rounded)}g/Woche`;
+    }
+    return `~${rounded.toFixed(1).replace('.', ',')}g/Woche`;
+  };
+
   const timelineOptions: { value: TimelineChoice; label: string; desc: string; rate: string; baseWeeks: number }[] = [
-    { value: '4-6-weeks', label: '4 Wochen', desc: 'Schnelle Progression, hohe Trainingsdisziplin nötig', rate: '~2g/Woche', baseWeeks: 4 },
-    { value: '6-10-weeks', label: '8 Wochen', desc: 'Gleichgewicht aus Tempo und Anpassung', rate: '~1,2g/Woche', baseWeeks: 8 },
-    { value: '10+-weeks', label: '12 Wochen', desc: 'Konservativ, geringstes GI-Risiko', rate: '~0,7g/Woche', baseWeeks: 12 },
+    { value: '4-6-weeks', label: '4 Wochen', desc: 'Schnelle Progression, hohe Trainingsdisziplin nötig', rate: calculateWeeklyRate(4), baseWeeks: 4 },
+    { value: '6-10-weeks', label: '8 Wochen', desc: 'Gleichgewicht aus Tempo und Anpassung', rate: calculateWeeklyRate(8), baseWeeks: 8 },
+    { value: '10+-weeks', label: '12 Wochen', desc: 'Konservativ, geringstes GI-Risiko', rate: calculateWeeklyRate(12), baseWeeks: 12 },
   ];
 
   // Calculate which durations are valid (won't be auto-shortened)
