@@ -21,8 +21,8 @@ export default function LandingScreen() {
       
       {/* Hero Section */}
       <section className="flex-1 flex flex-col items-center justify-center px-6 py-20 relative bg-cover bg-center" style={{ backgroundImage: 'url(https://cdn.shopify.com/s/files/1/0873/9700/7685/files/better_gut-trainer_kachel-banner.jpg?v=1766541976)' }}>
-        {/* 20% Black Overlay */}
-        <div className="absolute inset-0 bg-black/20"></div>
+        {/* 30% Black Overlay */}
+        <div className="absolute inset-0 bg-black/30"></div>
         
         <div className="max-w-2xl mx-auto text-center space-y-8 relative z-10">
           {/* Headline */}
@@ -34,7 +34,7 @@ export default function LandingScreen() {
 
 
           {/* Subheadline */}
-          <div className="text-subheadline max-w-lg mx-auto text-white/90 space-y-2">
+          <div className="text-subheadline max-w-lg mx-auto text-white space-y-2">
             <p>
               Berechne dein Potenzial – basierend auf Distanz, aktueller Zufuhr und Belastungsverträglichkeit.
             </p>

@@ -40,6 +40,9 @@ export const metadata: Metadata = {
     "Laufen",
     "Ultra",
   ],
+  icons: {
+    icon: "https://cdn.shopify.com/s/files/1/0873/9700/7685/files/better_favicon_light.png?v=1716194944",
+  },
 };
 
 export default function RootLayout({
