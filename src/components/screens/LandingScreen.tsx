@@ -20,10 +20,13 @@ export default function LandingScreen() {
       <Header />
       
       {/* Hero Section */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-20">
-        <div className="max-w-2xl mx-auto text-center space-y-8">
+      <section className="flex-1 flex flex-col items-center justify-center px-6 py-20 relative bg-cover bg-center" style={{ backgroundImage: 'url(https://cdn.shopify.com/s/files/1/0873/9700/7685/files/better_gut-trainer_kachel-banner.jpg?v=1766541976)' }}>
+        {/* 20% Black Overlay */}
+        <div className="absolute inset-0 bg-black/20"></div>
+        
+        <div className="max-w-2xl mx-auto text-center space-y-8 relative z-10">
           {/* Headline */}
-          <h1 className="text-headline leading-tight">
+          <h1 className="text-headline leading-tight text-white">
             Wie viel Zeit kostet dich dein untrainierter Darm?
           </h1>
           
@@ -31,21 +34,12 @@ export default function LandingScreen() {
 
 
           {/* Subheadline */}
-          <div className="text-subheadline max-w-lg mx-auto text-black/70 space-y-2">
+          <div className="text-subheadline max-w-lg mx-auto text-white/90 space-y-2">
             <p>
               Berechne dein Potenzial – basierend auf Distanz, aktueller Zufuhr und Belastungsverträglichkeit.
             </p>
           </div>
-          
-          {/* Visual Proof Element - Example */}
-          <div className="bg-black/5 rounded-lg p-4 max-w-md mx-auto">
-            <p className="text-sm text-black/70 mb-2">
-              <span className="font-medium">Beispiel:</span> Triathlet, Ironman-Zielzeit 10:45h, aktuelle Zufuhr 55g/h
-            </p>
-            <p className="text-base font-medium text-black">
-              → Geschätztes Zeit-Potenzial: 8-12 Minuten
-            </p>
-          </div>
+        
 
           {/* Extra spacing for visual balance */}
           <div className="h-6 md:h-10"></div>
@@ -59,21 +53,17 @@ export default function LandingScreen() {
           <div className="pt-4">
             <Link
               href="/questionnaire/1"
-              className="btn-primary text-lg px-10 py-4 inline-block"
+              className="bg-white text-black hover:bg-white/90 text-lg px-10 py-4 inline-block rounded-full font-medium transition-colors"
             >
               Zeitersparnis berechnen →
             </Link>
           </div>
 
           {/* Meta */}
-          <p className="text-sm text-black/50">
+          <p className="text-sm text-white/80">
             60 Sekunden · 6 Fragen · dein Ergebnis sofort
           </p>
           
-          {/* Microcopy - No email needed */}
-          <p className="text-xs text-black/40">
-            Keine E-Mail nötig. Dein Ergebnis siehst du sofort.
-          </p>
         </div>
       </section>
 
@@ -85,7 +75,7 @@ export default function LandingScreen() {
               Warum dein Darm über deine Wettkampf-Performance entscheidet
             </h2>
             <p className="text-base md:text-lg text-black/70 leading-relaxed max-w-2xl mx-auto">
-              Deine Leistung hängt nicht davon ab, wie viele Kohlenhydrate du zuführst – sondern wie viel dein Darm unter Belastung tatsächlich aufnehmen kann. Das ist trainierbar. In 8-12 Wochen.
+              Deine Leistung hängt nicht davon ab, wie viele Kohlenhydrate du zuführst – sondern wie viel dein Darm unter Belastung tatsächlich aufnehmen kann. Das ist trainierbar. In 4-12 Wochen.
             </p>
           </div>
         </div>
