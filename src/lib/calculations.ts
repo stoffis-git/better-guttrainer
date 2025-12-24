@@ -338,8 +338,8 @@ export function calculateProtocol(
     // Cap at target (safety check)
     currentDosage = Math.min(currentDosage, targetIntake);
     allSessionDosages.push(currentDosage);
-  }
-  
+    }
+    
   // Ensure final session hits exact target
   const finalSessionIndex = totalSessions - 1;
   const finalDosage = allSessionDosages[finalSessionIndex];
@@ -385,7 +385,7 @@ export function calculateProtocol(
   // Store session dosages for calculateWeekSessions
   // We'll store this in a way that calculateWeekSessions can access it
   // For now, we'll pass it through weeklyTargets and calculate on-the-fly
-  
+
   // For backwards compatibility: Calculate weeklyIncrease as average
   weeklyIncrease = carbGap / totalWeeks;
 

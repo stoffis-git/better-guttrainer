@@ -262,13 +262,13 @@ export default function ProtocolResultsScreen() {
           {/* Progression Schedule */}
           <div className="space-y-6">
             <div>
-              <h2 className="text-label text-black/70">Progressionsplan</h2>
+            <h2 className="text-label text-black/70">Progressionsplan</h2>
               <p className="text-sm text-black/60 mt-2">
                 Pro Woche: <strong>2 Einheiten à 2 Stunden</strong> + <strong>1 lange Einheit (3–4h)</strong>. 
                 Die Dosierung steigt schrittweise über alle Einheiten.
               </p>
-            </div>
-            
+          </div>
+
           <div className="space-y-4">
               {Array.from({ length: protocol.totalWeeks }, (_, weekIndex) => {
                 const week = weekIndex + 1;
@@ -323,18 +323,18 @@ export default function ProtocolResultsScreen() {
                               {frequency >= 3 && (
                                 <span className="text-xs text-black/50">(z.B. Montag)</span>
                               )}
-                            </div>
+              </div>
                             <p className="text-sm text-black/60 mb-1">
                               Lange Einheit über 2 Stunden
                             </p>
-                          </div>
+              </div>
                           <div className="flex-shrink-0 text-right">
                             <p className="text-lg font-semibold text-black">
                               {sessions.session1}g/h
                             </p>
-                          </div>
-                        </div>
-                      </div>
+              </div>
+            </div>
+          </div>
 
                       {/* Session 2 */}
                       <div className="p-3 bg-white rounded-lg border border-black/5">
@@ -353,8 +353,8 @@ export default function ProtocolResultsScreen() {
                           <div className="flex-shrink-0 text-right">
                             <p className="text-lg font-semibold text-black">
                               {sessions.session2}g/h
-                            </p>
-                          </div>
+                </p>
+              </div>
                         </div>
                       </div>
 
@@ -374,14 +374,14 @@ export default function ProtocolResultsScreen() {
                               ) : (
                                 <>Lange Einheit über 2 Stunden</>
                               )}
-                            </p>
-                          </div>
+                </p>
+              </div>
                           <div className="flex-shrink-0 text-right">
                             <p className="text-lg font-semibold text-black">
                               {sessions.session3}g/h
-                            </p>
-                          </div>
-                        </div>
+                </p>
+              </div>
+            </div>
                       </div>
                     </div>
                   </div>

@@ -129,7 +129,7 @@ export default function ResultsScreen() {
         currentResult.minutesLow !== result.minutesLow ||
         currentResult.minutesHigh !== result.minutesHigh
       ) {
-        setCalculationResult(result);
+      setCalculationResult(result);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -331,21 +331,21 @@ export default function ResultsScreen() {
                       <span className="text-sm text-black/70">↑</span>
                     </div>
                     {/* Zusammengefasste Zahlen und Labels in der Mitte */}
-                    <div
-                      className="absolute flex flex-col items-center gap-1 text-xs md:text-sm text-black"
-                      style={{
-                        left: `${(currentPositionPercent + nextStepPositionPercent) / 2}%`,
+                  <div
+                    className="absolute flex flex-col items-center gap-1 text-xs md:text-sm text-black"
+                    style={{
+                      left: `${(currentPositionPercent + nextStepPositionPercent) / 2}%`,
                         top: 'calc(50% + 32px)',
-                        transform: 'translateX(-50%)',
-                      }}
-                    >
-                      <span className="whitespace-nowrap text-base md:text-lg font-medium">
-                        {currentIntakeNum} → {nextStep} g/h
-                      </span>
-                      <span className="text-sm md:text-base text-black/70 whitespace-nowrap">
-                        Aktuell → Ziel
-                      </span>
-                    </div>
+                      transform: 'translateX(-50%)',
+                    }}
+                  >
+                    <span className="whitespace-nowrap text-base md:text-lg font-medium">
+                      {currentIntakeNum} → {nextStep} g/h
+                    </span>
+                    <span className="text-sm md:text-base text-black/70 whitespace-nowrap">
+                      Aktuell → Ziel
+                    </span>
+                  </div>
                   </>
                 )}
               </div>

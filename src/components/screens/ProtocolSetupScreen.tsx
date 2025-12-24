@@ -121,15 +121,15 @@ export default function ProtocolSetupScreen() {
     <div className="min-h-screen flex flex-col bg-white text-black">
       {/* Header */}
       <header className="px-6 pt-6 pb-4">
-        <a
-          href="/results"
+          <a
+            href="/results"
           className="flex items-center gap-2 text-sm md:text-base text-black/70 hover:text-black transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Zurück zum Ergebnis
-        </a>
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Zurück zum Ergebnis
+          </a>
       </header>
 
       {/* Content */}
@@ -159,22 +159,22 @@ export default function ProtocolSetupScreen() {
                 const isDisabled = !isValid;
 
                 return (
-                  <button
-                    key={option.value}
+                <button
+                  key={option.value}
                     onClick={() => {
                       if (!isDisabled) {
                         handleTimelineSelect(option.value);
                       }
                     }}
                     disabled={isDisabled}
-                    className={`w-full p-5 rounded-xl border text-left transition-all ${
+                  className={`w-full p-5 rounded-xl border text-left transition-all ${
                       isDisabled
                         ? 'border-black/5 bg-black/5 text-black/40 cursor-not-allowed'
                         : isSelected
-                        ? 'border-black bg-black text-white'
-                        : 'border-black/10 hover:border-black/30 bg-white'
-                    }`}
-                  >
+                      ? 'border-black bg-black text-white'
+                      : 'border-black/10 hover:border-black/30 bg-white'
+                  }`}
+                >
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export default function ProtocolSetupScreen() {
                       {option.rate}
                     </span>
                   </div>
-                  </button>
+                </button>
                 );
               })}
             </div>
