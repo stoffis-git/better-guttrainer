@@ -41,7 +41,14 @@ export const metadata: Metadata = {
     "Ultra",
   ],
   icons: {
-    icon: "https://cdn.shopify.com/s/files/1/0873/9700/7685/files/better_favicon_light.png?v=1716194944",
+    icon: [
+      {
+        url: "https://cdn.shopify.com/s/files/1/0873/9700/7685/files/better_favicon_light.png?v=1716194944",
+        type: "image/png",
+      },
+    ],
+    shortcut: "https://cdn.shopify.com/s/files/1/0873/9700/7685/files/better_favicon_light.png?v=1716194944",
+    apple: "https://cdn.shopify.com/s/files/1/0873/9700/7685/files/better_favicon_light.png?v=1716194944",
   },
 };
 
