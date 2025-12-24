@@ -21,8 +21,8 @@ export default function LandingScreen() {
       
       {/* Hero Section */}
       <section className="flex-1 flex flex-col items-center justify-center px-6 py-20 relative bg-cover bg-center" style={{ backgroundImage: 'url(https://cdn.shopify.com/s/files/1/0873/9700/7685/files/better_gut-trainer_kachel-banner.jpg?v=1766541976)' }}>
-        {/* 30% Black Overlay */}
-        <div className="absolute inset-0 bg-black/30"></div>
+        {/* 50% Black Overlay */}
+        <div className="absolute inset-0 bg-black/50 z-0"></div>
         
         <div className="max-w-2xl mx-auto text-center space-y-8 relative z-10">
           {/* Headline */}
@@ -34,8 +34,8 @@ export default function LandingScreen() {
 
 
           {/* Subheadline */}
-          <div className="text-subheadline max-w-lg mx-auto text-white space-y-2">
-            <p>
+          <div className="text-subheadline max-w-lg mx-auto space-y-2">
+            <p className="text-white" style={{ color: 'white' }}>
               Berechne dein Potenzial – basierend auf Distanz, aktueller Zufuhr und Belastungsverträglichkeit.
             </p>
           </div>
@@ -60,7 +60,7 @@ export default function LandingScreen() {
           </div>
 
           {/* Meta */}
-          <p className="text-sm text-white/80">
+          <p className="text-base md:text-sm text-white/80">
             60 Sekunden · 6 Fragen · dein Ergebnis sofort
           </p>
           
@@ -93,7 +93,7 @@ export default function LandingScreen() {
                 </svg>
               </div>
               <h3 className="font-medium text-black">Evidenzbasiert</h3>
-              <p className="text-sm text-black/60 leading-relaxed">
+              <p className="text-base md:text-sm text-black/60 leading-relaxed">
                 Basierend auf Studien mit messbaren Ergebnissen: +30-50% Kohlenhydrat-Toleranz nach 8-12 Wochen systematischem Training.
               </p>
             </div>
@@ -106,7 +106,7 @@ export default function LandingScreen() {
                 </svg>
               </div>
               <h3 className="font-medium text-black">Personalisiert</h3>
-              <p className="text-sm text-black/60 leading-relaxed">
+              <p className="text-base md:text-sm text-black/60 leading-relaxed">
                 Abgestimmt auf deine Sportart, Wettkampfdistanz, Physiologie und aktuelle Verpflegungsgewohnheiten.
               </p>
             </div>
@@ -119,7 +119,7 @@ export default function LandingScreen() {
                 </svg>
               </div>
               <h3 className="font-medium text-black">Umsetzbar</h3>
-              <p className="text-sm text-black/60 leading-relaxed">
+              <p className="text-base md:text-sm text-black/60 leading-relaxed">
                 Erhalte einen Wochenplan fürs Darm-Training, mit dem du direkt ins Training einsteigen kannst.
               </p>
             </div>
@@ -129,7 +129,7 @@ export default function LandingScreen() {
 
       {/* Footer - Scientific citations remain in footer */}
       <footer className="border-t border-black/5 px-6 py-8 bg-white">
-        <p className="text-center text-xs text-black/50">
+        <p className="text-center text-sm md:text-xs text-black/50">
           Basierend auf Forschung von Costa et al. (2017), Stellingwerff & Cox (2014), Viribay et al. (2020)
         </p>
       </footer>
