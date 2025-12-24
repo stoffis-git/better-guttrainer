@@ -133,7 +133,7 @@ export default function ProtocolSetupScreen() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-6 pt-6 pb-0 md:pb-2">
+      <main className="px-6 pt-6 pb-0">
         <div className="max-w-xl mx-auto space-y-10">
           {/* Short distance disclaimer */}
           {state.sport && state.event && isShortDistanceEvent(state.sport, state.event) && (
@@ -246,18 +246,18 @@ export default function ProtocolSetupScreen() {
               ))}
             </div>
             {frequency >= 2 && (
-              <p className="text-xs text-black/60 mb-4">✓ Empfohlen für bestmögliche Anpassung</p>
+              <p className="text-xs text-black/60 mb-0">✓ Empfohlen für bestmögliche Anpassung</p>
             )}
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="px-6 pt-2 md:pt-0 pb-12 md:pb-[146px]">
+      <footer className="px-6 pt-[60px] pb-[100px] xl:pb-6">
         <div className="max-w-xl mx-auto">
           <button
             onClick={handleGenerate}
-            className="w-full btn-primary text-lg py-5"
+            className="w-full btn-primary text-lg py-5 mb-[100px] xl:mb-0"
           >
             Protokoll erstellen →
           </button>
