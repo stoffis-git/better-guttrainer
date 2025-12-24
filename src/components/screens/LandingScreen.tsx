@@ -24,7 +24,7 @@ export default function LandingScreen() {
         <div className="max-w-2xl mx-auto text-center space-y-8">
           {/* Headline */}
           <h1 className="text-headline leading-tight">
-            Train your gut
+            Wie viel Zeit kostet dich dein untrainierter Darm?
           </h1>
           
           <div style={{ height: '24px' }} />
@@ -33,10 +33,20 @@ export default function LandingScreen() {
           {/* Subheadline */}
           <div className="text-subheadline max-w-lg mx-auto text-black/70 space-y-2">
             <p>
-              "Wie viele Minuten kann ich durch optimierte Kohlenhydrat-Zufuhr einsparen?"
+              Berechne dein Potenzial – basierend auf Distanz, aktueller Zufuhr und Belastungsverträglichkeit.
             </p>
           </div>
           
+          {/* Visual Proof Element - Example */}
+          <div className="bg-black/5 rounded-lg p-4 max-w-md mx-auto">
+            <p className="text-sm text-black/70 mb-2">
+              <span className="font-medium">Beispiel:</span> Triathlet, Ironman-Zielzeit 10:45h, aktuelle Zufuhr 55g/h
+            </p>
+            <p className="text-base font-medium text-black">
+              → Geschätztes Zeit-Potenzial: 8-12 Minuten
+            </p>
+          </div>
+
           {/* Extra spacing for visual balance */}
           <div className="h-6 md:h-10"></div>
 
@@ -51,14 +61,33 @@ export default function LandingScreen() {
               href="/questionnaire/1"
               className="btn-primary text-lg px-10 py-4 inline-block"
             >
-              Jetzt herausfinden
+              Zeitersparnis berechnen →
             </Link>
           </div>
 
           {/* Meta */}
           <p className="text-sm text-black/50">
-            60 Sekunden • 6 Fragen • evidenzbasiert
+            60 Sekunden · 6 Fragen · dein Ergebnis sofort
           </p>
+          
+          {/* Microcopy - No email needed */}
+          <p className="text-xs text-black/40">
+            Keine E-Mail nötig. Dein Ergebnis siehst du sofort.
+          </p>
+        </div>
+      </section>
+
+      {/* Secondary Concept Framing Section */}
+      <section className="border-t border-black/5 bg-white">
+        <div className="max-w-3xl mx-auto px-6 py-16">
+          <div className="text-center space-y-6">
+            <h2 className="text-2xl md:text-3xl font-medium text-black">
+              Warum dein Darm über deine Wettkampf-Performance entscheidet
+            </h2>
+            <p className="text-base md:text-lg text-black/70 leading-relaxed max-w-2xl mx-auto">
+              Deine Leistung hängt nicht davon ab, wie viele Kohlenhydrate du zuführst – sondern wie viel dein Darm unter Belastung tatsächlich aufnehmen kann. Das ist trainierbar. In 8-12 Wochen.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -66,7 +95,7 @@ export default function LandingScreen() {
       <section className="border-t border-black/5 bg-white">
         <div className="max-w-5xl mx-auto px-6 py-16">
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
+            {/* Feature 1 - Trust & Credibility */}
             <div className="text-center space-y-4">
               <div className="w-12 h-12 mx-auto rounded-full bg-black text-white flex items-center justify-center">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,7 +104,7 @@ export default function LandingScreen() {
               </div>
               <h3 className="font-medium text-black">Evidenzbasiert</h3>
               <p className="text-sm text-black/60 leading-relaxed">
-                Entwickelt auf Basis begutachteter Studien von Costa, Stellingwerff, Viribay und weiteren Forscher:innen.
+                Basierend auf Studien mit messbaren Ergebnissen: +30-50% Kohlenhydrat-Toleranz nach 8-12 Wochen systematischem Training.
               </p>
             </div>
 
@@ -101,14 +130,14 @@ export default function LandingScreen() {
               </div>
               <h3 className="font-medium text-black">Umsetzbar</h3>
               <p className="text-sm text-black/60 leading-relaxed">
-                Erhalte einen Wochenplan fürs Gut-Training, mit dem du direkt ins Training einsteigen kannst.
+                Erhalte einen Wochenplan fürs Darm-Training, mit dem du direkt ins Training einsteigen kannst.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer - Scientific citations remain in footer */}
       <footer className="border-t border-black/5 px-6 py-8 bg-white">
         <p className="text-center text-xs text-black/50">
           Basierend auf Forschung von Costa et al. (2017), Stellingwerff & Cox (2014), Viribay et al. (2020)
