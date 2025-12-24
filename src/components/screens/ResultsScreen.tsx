@@ -194,7 +194,7 @@ export default function ResultsScreen() {
           <div className="max-w-4xl mx-auto space-y-10">
             {/* Hero number */}
             <div className="space-y-4 text-center">
-              <p className="text-sm md:text-base uppercase tracking-[0.2em] text-black/60">Spare bis zu</p>
+              <p className="text-sm md:text-base uppercase tracking-[0.2em] text-black/60">Verbessere deine Zeit um bis zu</p>
               <p className="font-semibold tracking-tight leading-tight">
                 <span className="text-6xl md:text-7xl">
                   {timeSavedNextStepMin}–{timeSavedNextStepMax}

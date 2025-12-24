@@ -55,7 +55,7 @@ export default function LandingScreen() {
               href="/questionnaire/1"
               className="bg-white text-black hover:bg-white/90 text-lg px-10 py-4 inline-block rounded-full font-medium transition-colors"
             >
-              Zeitersparnis berechnen →
+              Potential berechnen →
             </Link>
           </div>
 
